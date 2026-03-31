@@ -54,7 +54,7 @@ class BookReaderRepositoryImpl @Inject constructor(
             inputStream.close()
 
             val parser = parserFactory.getParser(format)
-            val document = parser.parse(tempFile.inputStream(), uri.toString(), uri.toString())
+            val document = parser.parse(tempFile, uri.toString())
 
             currentDocument = document
             document
@@ -63,7 +63,8 @@ class BookReaderRepositoryImpl @Inject constructor(
 
     override suspend fun getChapterContent(documentId: String, chapterIndex: Int): Resource<String> {
         return safeCall {
-            val doc = currentDocument ?: throw Exception("Belge yüklenmemiş")
+            val doc = currentDocument
+                ?: throw Exception("Belge yüklenmemiş")
             if (doc.id != documentId) throw Exception("Belge kimliği uyuşmuyor")
             val chapter = doc.chapters.getOrNull(chapterIndex)
                 ?: throw Exception("Bölüm bulunamadı: $chapterIndex")
@@ -82,11 +83,17 @@ class BookReaderRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun pauseReading(): Resource<Unit> = safeCall { ttsEngine.pause() }
+    override suspend fun pauseReading(): Resource<Unit> {
+        return safeCall { ttsEngine.pause() }
+    }
 
-    override suspend fun resumeReading(): Resource<Unit> = safeCall { }
+    override suspend fun resumeReading(): Resource<Unit> {
+        return safeCall { /* caller kalan metni yeniden başlatmalı */ }
+    }
 
-    override suspend fun stopReading(): Resource<Unit> = safeCall { ttsEngine.stop() }
+    override suspend fun stopReading(): Resource<Unit> {
+        return safeCall { ttsEngine.stop() }
+    }
 
     override fun isSpeaking(): Boolean = ttsEngine.isSpeaking()
 

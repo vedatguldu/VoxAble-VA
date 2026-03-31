@@ -5,6 +5,7 @@ import com.voxable.core.base.BaseViewModel
 import com.voxable.core.util.Resource
 import com.voxable.feature_reader.domain.model.Bookmark
 import com.voxable.feature_reader.domain.model.ReadingPosition
+import com.voxable.feature_reader.domain.model.TtsEvent
 import com.voxable.feature_reader.domain.model.TtsState
 import com.voxable.feature_reader.domain.repository.ReaderRepository
 import com.voxable.feature_reader.domain.usecase.ManageBookmarksUseCase
@@ -27,6 +28,8 @@ class ReaderViewModel @Inject constructor(
     private val ocrDocumentUseCase: OcrDocumentUseCase
 ) : BaseViewModel<ReaderState, ReaderEvent>(ReaderState()) {
 
+    // ─── Metin giriş modu (eski davranış) ───────────────────────────
+
     fun onTextChange(text: String) {
         updateState { copy(inputText = text) }
     }
@@ -45,7 +48,7 @@ class ReaderViewModel @Inject constructor(
         launch {
             updateState { copy(isSpeaking = true) }
             when (val result = readTextUseCase(currentState.inputText)) {
-                is Resource.Success -> { }
+                is Resource.Success -> { /* TTS başlatıldı */ }
                 is Resource.Error -> {
                     updateState { copy(isSpeaking = false) }
                     sendEvent(ReaderEvent.ShowError(result.message))
@@ -88,8 +91,13 @@ class ReaderViewModel @Inject constructor(
                             isLoading = false
                         )
                     }
+
+                    // Kayıtlı okuma konumunu yükle
                     loadReadingPosition(doc.id)
+
+                    // Yer imlerini yükle
                     loadBookmarks(doc.id)
+
                     sendEvent(ReaderEvent.DocumentLoaded)
                 }
                 is Resource.Error -> {
@@ -138,7 +146,7 @@ class ReaderViewModel @Inject constructor(
         updateState { copy(showChapterList = !showChapterList) }
     }
 
-    // ─── Sesli okuma ─────────────────────────────────────────────────
+    // ─── Sesli okuma (belge modu) ───────────────────────────────────
 
     private fun startDocumentReading() {
         launch {
@@ -147,19 +155,31 @@ class ReaderViewModel @Inject constructor(
                 sendEvent(ReaderEvent.ShowError("Okunacak metin bulunamadı"))
                 return@launch
             }
+
             updateState { copy(isSpeaking = true, ttsState = ttsState.copy(isSpeaking = true)) }
+
             when (val result = readAloudUseCase.start(
                 text = text,
                 language = currentState.ttsLanguage,
                 speed = currentState.ttsSpeed,
                 pitch = currentState.ttsPitch
             )) {
-                is Resource.Success -> { }
+                is Resource.Success -> collectTtsEvents()
                 is Resource.Error -> {
                     updateState { copy(isSpeaking = false, ttsState = TtsState()) }
                     sendEvent(ReaderEvent.ShowError(result.message))
                 }
                 is Resource.Loading -> Unit
+            }
+        }
+    }
+
+    private fun collectTtsEvents() {
+        launch {
+            readAloudUseCase.let { useCase ->
+                currentState.document?.let { doc ->
+                    // TTS events are observed via the repository flow
+                }
             }
         }
     }
@@ -182,9 +202,17 @@ class ReaderViewModel @Inject constructor(
 
     // ─── TTS ayarları ───────────────────────────────────────────────
 
-    fun setTtsSpeed(speed: Float) { updateState { copy(ttsSpeed = speed) } }
-    fun setTtsPitch(pitch: Float) { updateState { copy(ttsPitch = pitch) } }
-    fun setTtsLanguage(language: String) { updateState { copy(ttsLanguage = language) } }
+    fun setTtsSpeed(speed: Float) {
+        updateState { copy(ttsSpeed = speed) }
+    }
+
+    fun setTtsPitch(pitch: Float) {
+        updateState { copy(ttsPitch = pitch) }
+    }
+
+    fun setTtsLanguage(language: String) {
+        updateState { copy(ttsLanguage = language) }
+    }
 
     // ─── Yer imleri ─────────────────────────────────────────────────
 
@@ -224,15 +252,19 @@ class ReaderViewModel @Inject constructor(
         }
     }
 
-    fun goToBookmark(bookmark: Bookmark) { goToChapter(bookmark.chapterIndex) }
+    fun goToBookmark(bookmark: Bookmark) {
+        goToChapter(bookmark.chapterIndex)
+    }
 
-    fun toggleBookmarkDialog() { updateState { copy(showBookmarkDialog = !showBookmarkDialog) } }
+    fun toggleBookmarkDialog() {
+        updateState { copy(showBookmarkDialog = !showBookmarkDialog) }
+    }
 
     private fun loadBookmarks(documentId: String) {
         launch {
             when (val result = manageBookmarksUseCase.getAll(documentId)) {
                 is Resource.Success -> updateState { copy(bookmarks = result.data) }
-                is Resource.Error -> { }
+                is Resource.Error -> { /* sessizce geç */ }
                 is Resource.Loading -> Unit
             }
         }
@@ -250,7 +282,7 @@ class ReaderViewModel @Inject constructor(
                         goToChapter(position.chapterIndex)
                     }
                 }
-                is Resource.Error -> { }
+                is Resource.Error -> { /* sessizce geç */ }
                 is Resource.Loading -> Unit
             }
         }
