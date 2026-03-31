@@ -106,6 +106,7 @@ fun LoginScreen(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
+                    visualTransformation = PasswordVisualTransformation(),
                     accessibilityLabel = "Şifre giriş alanı"
                 )
 

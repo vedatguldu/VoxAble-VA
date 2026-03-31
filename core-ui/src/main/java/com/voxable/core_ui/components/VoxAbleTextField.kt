@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun VoxAbleTextField(
@@ -23,6 +24,7 @@ fun VoxAbleTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = true,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     accessibilityLabel: String = label
 ) {
     OutlinedTextField(
@@ -53,6 +55,7 @@ fun VoxAbleTextField(
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         singleLine = singleLine,
+        visualTransformation = visualTransformation,
         shape = MaterialTheme.shapes.medium
     )
 }
