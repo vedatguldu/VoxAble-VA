@@ -57,8 +57,24 @@ dependencies {
     implementation(libs.camerax.lifecycle)
     implementation(libs.camerax.view)
 
-    // ML Kit
+    // ML Kit (multi-language)
     implementation(libs.mlkit.text.recognition)
+    implementation(libs.mlkit.text.recognition.chinese)
+    implementation(libs.mlkit.text.recognition.devanagari)
+    implementation(libs.mlkit.text.recognition.japanese)
+    implementation(libs.mlkit.text.recognition.korean)
+
+    // Tesseract OCR
+    implementation(libs.tess.two)
+
+    // Coroutines
+    implementation(libs.coroutines.core)
+    implementation(libs.coroutines.android)
+
+    // Image loading
+    implementation(libs.coil.compose)
+
+    implementation(libs.compose.material.icons.extended)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
