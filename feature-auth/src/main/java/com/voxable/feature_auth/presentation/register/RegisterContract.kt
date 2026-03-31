@@ -9,6 +9,7 @@ data class RegisterState(
     val password: String = "",
     val confirmPassword: String = "",
     val isLoading: Boolean = false,
+    val isGoogleLoading: Boolean = false,
     val nameError: String? = null,
     val emailError: String? = null,
     val passwordError: String? = null,
@@ -18,4 +19,5 @@ data class RegisterState(
 sealed class RegisterEvent : UiEvent {
     data object RegisterSuccess : RegisterEvent()
     data class ShowError(val message: String) : RegisterEvent()
+    data object LaunchGoogleSignIn : RegisterEvent()
 }
