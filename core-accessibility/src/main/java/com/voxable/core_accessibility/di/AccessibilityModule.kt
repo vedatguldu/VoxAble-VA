@@ -3,6 +3,7 @@ package com.voxable.core_accessibility.di
 import android.content.Context
 import com.voxable.core_accessibility.AccessibilityStateManager
 import com.voxable.core_accessibility.TalkBackUtils
+import com.voxable.core_accessibility.VoiceFeedbackManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,5 +29,14 @@ object AccessibilityModule {
         @ApplicationContext context: Context
     ): TalkBackUtils {
         return TalkBackUtils(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideVoiceFeedbackManager(
+        @ApplicationContext context: Context,
+        stateManager: AccessibilityStateManager
+    ): VoiceFeedbackManager {
+        return VoiceFeedbackManager(context, stateManager)
     }
 }
