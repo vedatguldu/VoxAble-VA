@@ -1,6 +1,19 @@
-# VoxAble - Erişilebilir Sesli Asistan
+# VoxAble — Erişilebilir Sesli Asistan
+
+[![Android CI](https://github.com/vedatguldu/VoxAble-VA/actions/workflows/android-ci.yml/badge.svg)](https://github.com/vedatguldu/VoxAble-VA/actions/workflows/android-ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.0-purple.svg)](https://kotlinlang.org)
+[![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg)](https://developer.android.com/about/versions/lollipop)
 
 **TalkBack uyumlu**, görme engelli kullanıcılar için tasarlanmış çok modüllü Android uygulaması.
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white" />
+  <img src="https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-FFCA28?logo=firebase&logoColor=black" />
+  <img src="https://img.shields.io/badge/Hilt-DI-FF6F00?logo=dagger&logoColor=white" />
+</p>
+
+---
 
 ## 🏗️ Mimari
 
@@ -21,7 +34,7 @@ VoxAble/
 ├── core-ui/                → Compose tema, renk, tipografi, ortak bileşenler
 ├── core-accessibility/     → TalkBack yardımcıları, erişilebilirlik semantikleri
 ├── core-network/           → Retrofit + OkHttp + AuthInterceptor
-├── core-database/          → Room veritabanı, DAO'lar, Entity'ler, DataStore
+├── core-database/          → Room veritabanı, DAO’lar, Entity’ler, DataStore
 ├── feature-auth/           → Giriş / Kayıt (Firebase Auth + Firestore)
 ├── feature-home/           → Ana sayfa, özellik kartları
 ├── feature-reader/         → Metin okuyucu (Android TTS, Türkçe)
@@ -103,10 +116,14 @@ Alt çubuk sekmeleri: Ana Sayfa, Okuyucu, Medya, Ayarlar
 
 ## 🚀 Kurulum
 
-1. `google-services.json` dosyasını `app/` altına yerleştirin
-2. Android Studio'da projeyi açın
-3. Gradle sync yapın
-4. Çalıştırın
+1. Repoyu klonlayın:
+   ```bash
+   git clone https://github.com/vedatguldu/VoxAble-VA.git
+   ```
+2. `google-services.json` dosyasını `app/` altına yerleştirin
+3. Android Studio’da projeyi açın
+4. Gradle sync yapın
+5. Çalıştırın
 
 ## 📋 Bağımlılık Grafiği
 
@@ -122,3 +139,15 @@ feature-converter → core, core-ui, core-accessibility
 feature-downloader → core, core-ui, core-accessibility, core-network, core-database
 feature-settings → core, core-ui, core-accessibility, core-database, Firebase Auth
 ```
+
+## 🤝 Katkıda Bulunma
+
+Katkı rehberi için [CONTRIBUTING.md](CONTRIBUTING.md) dosyasına bakın.
+
+## 📄 Lisans
+
+Bu proje [MIT Lisansı](LICENSE) altında lisanslanmıştır.
+
+---
+
+**VoxAble** — Herkes için erişilebilir teknoloji. ♥
