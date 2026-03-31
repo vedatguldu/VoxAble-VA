@@ -1,0 +1,27 @@
+package com.voxable.feature_home.navigation
+
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.composable
+import com.voxable.feature_home.presentation.HomeScreen
+
+const val HOME_ROUTE = "home"
+
+fun NavGraphBuilder.homeScreen(
+    onNavigateToReader: () -> Unit,
+    onNavigateToMedia: () -> Unit,
+    onNavigateToOcr: () -> Unit,
+    onNavigateToCurrency: () -> Unit,
+    onNavigateToConverter: () -> Unit,
+    onNavigateToDownloader: () -> Unit
+) {
+    composable(HOME_ROUTE) {
+        HomeScreen(
+            onNavigateToReader = onNavigateToReader,
+            onNavigateToMedia = onNavigateToMedia,
+            onNavigateToOcr = onNavigateToOcr,
+            onNavigateToCurrency = onNavigateToCurrency,
+            onNavigateToConverter = onNavigateToConverter,
+            onNavigateToDownloader = onNavigateToDownloader
+        )
+    }
+}
