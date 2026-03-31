@@ -1,2 +1,1 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest />
+<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n\n    <!-- Media reading permissions -->\n    <uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\" />\n    <uses-permission android:name=\"android.permission.READ_MEDIA_AUDIO\" />\n    <uses-permission android:name=\"android.permission.READ_MEDIA_VIDEO\" />\n\n    <!-- Network access for streaming media -->\n    <uses-permission android:name=\"android.permission.INTERNET\" />\n\n</manifest>\n
