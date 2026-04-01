@@ -45,11 +45,25 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
     debugImplementation(libs.compose.ui.tooling)
 
     implementation(libs.hilt.android)
     kapt(libs.hilt.android.compiler)
     implementation(libs.hilt.navigation.compose)
+
+    // FFmpegKit (video/audio conversion)
+    implementation(libs.ffmpegkit.full)
+
+    // ML Kit Text Recognition (image→text, pdf→text)
+    implementation(libs.google.mlkit.text.recognition)
+
+    // Image loading
+    implementation(libs.coil.compose)
+
+    // Coroutines
+    implementation(libs.coroutines.core)
+    implementation(libs.coroutines.android)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

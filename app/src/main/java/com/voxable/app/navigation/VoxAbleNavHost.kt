@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import com.voxable.feature_auth.navigation.authNavGraph
 import com.voxable.feature_auth.navigation.AUTH_GRAPH_ROUTE
 import com.voxable.feature_converter.navigation.converterScreen
+import com.voxable.feature_converter.navigation.fileConverterScreen
 import com.voxable.feature_currency.navigation.currencyRecognitionScreen
 import com.voxable.feature_currency.navigation.currencyScreen
 import com.voxable.feature_downloader.navigation.downloaderScreen
@@ -71,6 +72,11 @@ fun VoxAbleNavHost(
         )
 
         converterScreen(
+            onBack = { navController.popBackStack() },
+            onNavigateToFileConverter = { navController.navigate("file_converter") }
+        )
+
+        fileConverterScreen(
             onBack = { navController.popBackStack() }
         )
 

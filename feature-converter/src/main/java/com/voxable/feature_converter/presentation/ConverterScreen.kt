@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.Transform
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +24,7 @@ import com.voxable.core_ui.components.VoxAbleTopBar
 @Composable
 fun ConverterScreen(
     onBack: () -> Unit,
+    onNavigateToFileConverter: () -> Unit = {},
     viewModel: ConverterViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -42,6 +44,29 @@ fun ConverterScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Dosya Dönüştürücü butonu
+            Button(
+                onClick = onNavigateToFileConverter,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        contentDescription = "Dosya Dönüştürücü ekranına git. Video, ses, PDF ve görüntü dönüştürme"
+                    },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Transform,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Dosya Dönüştürücü")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Kategori seçimi (chip row)
             Row(
                 modifier = Modifier
