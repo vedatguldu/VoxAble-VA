@@ -2,6 +2,7 @@ package com.voxable.feature_currency.presentation
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,6 +25,7 @@ import com.voxable.core_ui.components.VoxAbleTopBar
 @Composable
 fun CurrencyScreen(
     onBack: () -> Unit,
+    onNavigateToRecognition: () -> Unit = {},
     viewModel: CurrencyViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -43,6 +45,23 @@ fun CurrencyScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Para Birimi Tanıma butonu
+            androidx.compose.material3.OutlinedButton(
+                onClick = onNavigateToRecognition,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "Para birimi tanıma ekranına git" }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CameraAlt,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Para Birimi Tanıma")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Miktar girişi
             VoxAbleTextField(
                 value = state.amount,

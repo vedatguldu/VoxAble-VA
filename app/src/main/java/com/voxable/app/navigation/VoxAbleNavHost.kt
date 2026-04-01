@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import com.voxable.feature_auth.navigation.authNavGraph
 import com.voxable.feature_auth.navigation.AUTH_GRAPH_ROUTE
 import com.voxable.feature_converter.navigation.converterScreen
+import com.voxable.feature_currency.navigation.currencyRecognitionScreen
 import com.voxable.feature_currency.navigation.currencyScreen
 import com.voxable.feature_downloader.navigation.downloaderScreen
 import com.voxable.feature_home.navigation.homeScreen
@@ -61,6 +62,11 @@ fun VoxAbleNavHost(
         )
 
         currencyScreen(
+            onBack = { navController.popBackStack() },
+            onNavigateToRecognition = { navController.navigate("currency_recognition") }
+        )
+
+        currencyRecognitionScreen(
             onBack = { navController.popBackStack() }
         )
 
