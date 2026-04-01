@@ -108,6 +108,11 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.analytics)
 
+    // WorkManager
+    implementation(libs.work.runtime.ktx)
+    implementation(libs.hilt.work)
+    kapt(libs.hilt.androidx.compiler)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.junit.ext)

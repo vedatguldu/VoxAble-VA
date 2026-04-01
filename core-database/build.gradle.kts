@@ -45,8 +45,19 @@ dependencies {
     // DataStore
     implementation(libs.androidx.datastore.preferences)
 
+    // Firebase Firestore (sync)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.auth)
+
+    // WorkManager + Hilt integration
+    implementation(libs.work.runtime.ktx)
+    implementation(libs.hilt.work)
+    kapt(libs.hilt.androidx.compiler)
+
     // Coroutines
     implementation(libs.coroutines.core)
+    implementation(libs.coroutines.android)
 
     // Testing
     testImplementation(libs.junit)

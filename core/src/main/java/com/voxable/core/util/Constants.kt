@@ -8,6 +8,8 @@ object Constants {
     object Firebase {
         const val USERS_COLLECTION = "users"
         const val SETTINGS_COLLECTION = "settings"
+        const val DOWNLOADS_COLLECTION = "downloads"
+        const val SYNC_METADATA_COLLECTION = "sync_metadata"
     }
 
     object Preferences {
@@ -28,5 +30,25 @@ object Constants {
         const val KEY_REDUCE_MOTION = "reduce_motion"
         const val KEY_SCREEN_READER_OPT = "screen_reader_optimization"
         const val KEY_TOUCH_TARGET_SIZE = "touch_target_size"
+    }
+
+    object Sync {
+        const val SYNC_WORKER_NAME = "voxable_periodic_sync"
+        const val IMMEDIATE_SYNC_WORKER_NAME = "voxable_immediate_sync"
+        const val SYNC_INTERVAL_MINUTES = 15L
+        const val MAX_RETRY_COUNT = 3
+        const val INITIAL_BACKOFF_SECONDS = 30L
+
+        // Entity types
+        const val ENTITY_USER = "user"
+        const val ENTITY_DOWNLOAD = "download"
+        const val ENTITY_SETTINGS = "settings"
+
+        // Firestore document fields
+        const val FIELD_VERSION = "version"
+        const val FIELD_UPDATED_AT = "updatedAt"
+        const val FIELD_CREATED_AT = "createdAt"
+        const val FIELD_CLIENT_ID = "clientId"
+        const val FIELD_ENTITY_TYPE = "entityType"
     }
 }

@@ -5,6 +5,8 @@ import androidx.room.Room
 import com.voxable.core.util.Constants
 import com.voxable.core_database.VoxAbleDatabase
 import com.voxable.core_database.dao.DownloadDao
+import com.voxable.core_database.dao.SyncQueueDao
+import com.voxable.core_database.dao.SyncStatusDao
 import com.voxable.core_database.dao.UserDao
 import dagger.Module
 import dagger.Provides
@@ -27,19 +29,24 @@ object DatabaseModule {
             VoxAbleDatabase::class.java,
             Constants.DATABASE_NAME
         )
+            .addMigrations(VoxAbleDatabase.MIGRATION_1_2)
             .fallbackToDestructiveMigration()
             .build()
     }
 
     @Provides
     @Singleton
-    fun provideUserDao(database: VoxAbleDatabase): UserDao {
-        return database.userDao()
-    }
+    fun provideUserDao(database: VoxAbleDatabase): UserDao = database.userDao()
 
     @Provides
     @Singleton
-    fun provideDownloadDao(database: VoxAbleDatabase): DownloadDao {
-        return database.downloadDao()
-    }
+    fun provideDownloadDao(database: VoxAbleDatabase): DownloadDao = database.downloadDao()
+
+    @Provides
+    @Singleton
+    fun provideSyncQueueDao(database: VoxAbleDatabase): SyncQueueDao = database.syncQueueDao()
+
+    @Provides
+    @Singleton
+    fun provideSyncStatusDao(database: VoxAbleDatabase): SyncStatusDao = database.syncStatusDao()
 }
