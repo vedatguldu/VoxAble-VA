@@ -12,7 +12,8 @@ fun NavGraphBuilder.homeScreen(
     onNavigateToOcr: () -> Unit,
     onNavigateToCurrency: () -> Unit,
     onNavigateToConverter: () -> Unit,
-    onNavigateToDownloader: () -> Unit
+    onNavigateToDownloader: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     composable(HOME_ROUTE) {
         HomeScreen(
@@ -21,7 +22,8 @@ fun NavGraphBuilder.homeScreen(
             onNavigateToOcr = onNavigateToOcr,
             onNavigateToCurrency = onNavigateToCurrency,
             onNavigateToConverter = onNavigateToConverter,
-            onNavigateToDownloader = onNavigateToDownloader
+            onNavigateToDownloader = onNavigateToDownloader,
+            onNavigateToSettings = onNavigateToSettings
         )
     }
 }

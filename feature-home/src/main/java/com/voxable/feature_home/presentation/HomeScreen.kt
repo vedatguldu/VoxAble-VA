@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -55,6 +56,7 @@ fun HomeScreen(
     onNavigateToCurrency: () -> Unit,
     onNavigateToConverter: () -> Unit,
     onNavigateToDownloader: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -65,7 +67,8 @@ fun HomeScreen(
         FeatureItem("OCR", Icons.Default.CameraAlt, "Metin tanıma özelliğini aç", onNavigateToOcr),
         FeatureItem("Döviz", Icons.Default.CurrencyExchange, "Döviz kurlarını görüntüle", onNavigateToCurrency),
         FeatureItem("Dönüştürücü", Icons.Default.SwapHoriz, "Birim dönüştürücüyü aç", onNavigateToConverter),
-        FeatureItem("İndirici", Icons.Default.Download, "Dosya indiriciyi aç", onNavigateToDownloader)
+        FeatureItem("İndirici", Icons.Default.Download, "Dosya indiriciyi aç", onNavigateToDownloader),
+        FeatureItem("Ayarlar", Icons.Default.Settings, "Uygulama ayarlarını aç", onNavigateToSettings)
     )
 
     Scaffold(

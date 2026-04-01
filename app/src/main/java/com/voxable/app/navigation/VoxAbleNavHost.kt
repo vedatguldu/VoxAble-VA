@@ -46,7 +46,8 @@ fun VoxAbleNavHost(
             onNavigateToOcr = { navController.navigate("ocr") },
             onNavigateToCurrency = { navController.navigate("currency") },
             onNavigateToConverter = { navController.navigate("converter") },
-            onNavigateToDownloader = { navController.navigate("downloader") }
+            onNavigateToDownloader = { navController.navigate("downloader") },
+            onNavigateToSettings = { navController.navigate("settings") }
         )
 
         readerScreen(
