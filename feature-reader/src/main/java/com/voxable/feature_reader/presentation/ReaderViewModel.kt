@@ -15,6 +15,7 @@ import com.voxable.feature_reader.domain.usecase.ReadAloudUseCase
 import com.voxable.feature_reader.domain.usecase.ReadTextUseCase
 import com.voxable.feature_reader.domain.usecase.ResumePositionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.collectLatest
 import javax.inject.Inject
 
 @HiltViewModel
@@ -28,6 +29,8 @@ class ReaderViewModel @Inject constructor(
     private val ocrDocumentUseCase: OcrDocumentUseCase
 ) : BaseViewModel<ReaderState, ReaderEvent>(ReaderState()) {
 
+    private var ttsEventsSubscribed = false
+
     // ─── Metin giriş modu (eski davranış) ───────────────────────────
 
     fun onTextChange(text: String) {
@@ -37,6 +40,8 @@ class ReaderViewModel @Inject constructor(
     fun onReadClick() {
         if (currentState.isSpeaking) {
             stopReading()
+        } else if (currentState.ttsState.isPaused) {
+            resumeReading()
         } else if (currentState.isDocumentMode && currentState.chapterText.isNotBlank()) {
             startDocumentReading()
         } else {
@@ -58,14 +63,14 @@ class ReaderViewModel @Inject constructor(
         }
     }
 
-    private fun stopReading() {
+    fun stopReading() {
         launch {
             readAloudUseCase.stop()
             readerRepository.stopSpeech()
             updateState {
                 copy(
                     isSpeaking = false,
-                    ttsState = ttsState.copy(isSpeaking = false, isPaused = false, currentWordIndex = -1)
+                    ttsState = ttsState.copy(isSpeaking = false, isPaused = false, currentWordStart = 0, currentWordEnd = 0)
                 )
             }
         }
@@ -175,10 +180,37 @@ class ReaderViewModel @Inject constructor(
     }
 
     private fun collectTtsEvents() {
+        if (ttsEventsSubscribed) return
+        ttsEventsSubscribed = true
         launch {
-            readAloudUseCase.let { useCase ->
-                currentState.document?.let { doc ->
-                    // TTS events are observed via the repository flow
+            readAloudUseCase.getTtsEvents().collectLatest { event ->
+                when (event) {
+                    is TtsEvent.Started -> updateState {
+                        copy(isSpeaking = true, ttsState = ttsState.copy(isSpeaking = true, isPaused = false))
+                    }
+                    is TtsEvent.Paused -> updateState {
+                        copy(isSpeaking = false, ttsState = ttsState.copy(isSpeaking = false, isPaused = true))
+                    }
+                    is TtsEvent.Stopped -> updateState {
+                        copy(isSpeaking = false, ttsState = TtsState())
+                    }
+                    is TtsEvent.WordStarted -> updateState {
+                        copy(
+                            ttsState = ttsState.copy(
+                                isSpeaking = true,
+                                currentWordStart = event.start,
+                                currentWordEnd = event.end
+                            )
+                        )
+                    }
+                    is TtsEvent.UtteranceDone -> {
+                        updateState { copy(isSpeaking = false, ttsState = TtsState()) }
+                        sendEvent(ReaderEvent.ReadingCompleted)
+                    }
+                    is TtsEvent.Error -> {
+                        updateState { copy(isSpeaking = false, ttsState = TtsState()) }
+                        sendEvent(ReaderEvent.ShowError(event.message))
+                    }
                 }
             }
         }
@@ -197,7 +229,18 @@ class ReaderViewModel @Inject constructor(
     }
 
     fun resumeReading() {
-        startDocumentReading()
+        launch {
+            when (val result = readAloudUseCase.resume()) {
+                is Resource.Success -> updateState {
+                    copy(isSpeaking = true, ttsState = ttsState.copy(isSpeaking = true, isPaused = false))
+                }
+                is Resource.Error -> {
+                    updateState { copy(isSpeaking = false, ttsState = TtsState()) }
+                    sendEvent(ReaderEvent.ShowError(result.message))
+                }
+                is Resource.Loading -> Unit
+            }
+        }
     }
 
     // ─── TTS ayarları ───────────────────────────────────────────────

@@ -4,5 +4,5 @@ import android.net.Uri
 import com.voxable.core.util.Resource
 
 interface OcrRepository {
-    suspend fun recognizeTextFromImage(imageUri: Uri): Resource<String>
+    suspend fun recognizeTextFromImage(imageUri: Uri, language: String = "tr"): Resource<String>
 }

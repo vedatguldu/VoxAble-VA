@@ -19,7 +19,13 @@ class WordTrackingTtsEngine @Inject constructor(
 ) {
     private var tts: TextToSpeech? = null
     private val _events = Channel<TtsEvent>(Channel.BUFFERED)
-    val events: Flow<TtsEvent> = _events.receiveAsFlow()
+    val ttsEvents: Flow<TtsEvent> = _events.receiveAsFlow()
+    private var lastText: String = ""
+    private var lastLanguage: String = "tr-TR"
+    private var lastSpeed: Float = 1.0f
+    private var lastPitch: Float = 1.0f
+    private var currentWordStart: Int = 0
+    private var isPaused: Boolean = false
 
     private suspend fun ensureInitialized(): TextToSpeech {
         tts?.let { return it }
@@ -45,31 +51,57 @@ class WordTrackingTtsEngine @Inject constructor(
                 }
 
                 override fun onRangeStart(utteranceId: String?, start: Int, end: Int, frame: Int) {
+                    currentWordStart = start
                     _events.trySend(TtsEvent.WordStarted(start, end))
                 }
             })
         }
     }
 
-    suspend fun speak(text: String, language: String = "tr-TR", speed: Float = 1.0f, pitch: Float = 1.0f) {
+    suspend fun speak(text: String, language: String = "tr-TR", speed: Float = 1.0f, pitch: Float = 1.0f): Boolean {
         val engine = ensureInitialized()
+        lastText = text
+        lastLanguage = language
+        lastSpeed = speed
+        lastPitch = pitch
+        currentWordStart = 0
+        isPaused = false
         val parts = language.split("-")
         engine.language = Locale(parts[0], parts.getOrElse(1) { "" })
         engine.setSpeechRate(speed)
         engine.setPitch(pitch)
         val utteranceId = UUID.randomUUID().toString()
-        engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+        return engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId) != TextToSpeech.ERROR
     }
 
     fun pause() {
+        isPaused = true
         tts?.stop()
         _events.trySend(TtsEvent.Paused)
     }
 
+    suspend fun resume(): Boolean {
+        if (!isPaused || lastText.isBlank()) return false
+        val remainingText = lastText.substring(currentWordStart.coerceIn(0, lastText.length))
+        if (remainingText.isBlank()) return false
+        val engine = ensureInitialized()
+        val parts = lastLanguage.split("-")
+        engine.language = Locale(parts[0], parts.getOrElse(1) { "" })
+        engine.setSpeechRate(lastSpeed)
+        engine.setPitch(lastPitch)
+        isPaused = false
+        val utteranceId = UUID.randomUUID().toString()
+        return engine.speak(remainingText, TextToSpeech.QUEUE_FLUSH, null, utteranceId) != TextToSpeech.ERROR
+    }
+
     fun stop() {
         tts?.stop()
+        isPaused = false
+        currentWordStart = 0
         _events.trySend(TtsEvent.Stopped)
     }
+
+    fun isSpeaking(): Boolean = tts?.isSpeaking == true
 
     fun release() {
         tts?.shutdown()

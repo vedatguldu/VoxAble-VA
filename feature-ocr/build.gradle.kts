@@ -52,20 +52,20 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
 
     // CameraX
-    implementation(libs.camerax.core)
-    implementation(libs.camerax.camera2)
-    implementation(libs.camerax.lifecycle)
-    implementation(libs.camerax.view)
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
 
     // ML Kit (multi-language)
-    implementation(libs.mlkit.text.recognition)
-    implementation(libs.mlkit.text.recognition.chinese)
-    implementation(libs.mlkit.text.recognition.devanagari)
-    implementation(libs.mlkit.text.recognition.japanese)
-    implementation(libs.mlkit.text.recognition.korean)
+    implementation(libs.google.mlkit.text.recognition)
+    implementation(libs.google.mlkit.text.recognition.chinese)
+    implementation(libs.google.mlkit.text.recognition.devanagari)
+    implementation(libs.google.mlkit.text.recognition.japanese)
+    implementation(libs.google.mlkit.text.recognition.korean)
 
     // Tesseract OCR
-    implementation(libs.tess.two)
+    implementation(libs.tess4j.android)
 
     // Coroutines
     implementation(libs.coroutines.core)

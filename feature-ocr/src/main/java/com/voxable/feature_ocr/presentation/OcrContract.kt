@@ -7,7 +7,9 @@ data class OcrState(
     val recognizedText: String = "",
     val isProcessing: Boolean = false,
     val isCameraActive: Boolean = false,
+    val hasCameraPermission: Boolean = false,
     val capturedImageUri: String? = null,
+    val selectedLanguage: String = "tr",
     val error: String? = null
 ) : UiState
 

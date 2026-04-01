@@ -12,7 +12,8 @@ data class BookmarkEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val documentId: String,
     val chapterIndex: Int,
-    val position: Int = 0,
+    val pageIndex: Int = 0,
+    val characterOffset: Int = 0,
     val title: String,
     val note: String? = null,
     val createdAt: Long = System.currentTimeMillis()
@@ -25,6 +26,8 @@ data class BookmarkEntity(
 data class ReadingPositionEntity(
     @PrimaryKey val documentId: String,
     val chapterIndex: Int,
-    val scrollPosition: Int = 0,
-    val lastReadAt: Long = System.currentTimeMillis()
+    val pageIndex: Int = 0,
+    val characterOffset: Int = 0,
+    val progressPercent: Float = 0f,
+    val updatedAt: Long = System.currentTimeMillis()
 )

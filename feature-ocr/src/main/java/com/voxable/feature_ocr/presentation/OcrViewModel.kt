@@ -13,6 +13,14 @@ class OcrViewModel @Inject constructor(
     private val recognizeTextUseCase: RecognizeTextUseCase
 ) : BaseViewModel<OcrState, OcrEvent>(OcrState()) {
 
+    fun onCameraPermissionChanged(granted: Boolean) {
+        updateState { copy(hasCameraPermission = granted, isCameraActive = if (granted) isCameraActive else false) }
+    }
+
+    fun onLanguageSelected(language: String) {
+        updateState { copy(selectedLanguage = language) }
+    }
+
     fun onImageCaptured(uri: Uri) {
         updateState { copy(capturedImageUri = uri.toString(), isCameraActive = false) }
         recognizeText(uri)
@@ -24,7 +32,10 @@ class OcrViewModel @Inject constructor(
     }
 
     fun onToggleCamera() {
-        updateState { copy(isCameraActive = !isCameraActive) }
+        updateState {
+            if (!hasCameraPermission) copy(error = "Kamera izni gerekli")
+            else copy(isCameraActive = !isCameraActive, error = null)
+        }
     }
 
     fun onClearText() {
@@ -34,7 +45,7 @@ class OcrViewModel @Inject constructor(
     private fun recognizeText(uri: Uri) {
         launch {
             updateState { copy(isProcessing = true, error = null) }
-            recognizeTextUseCase(uri)
+            recognizeTextUseCase(uri, currentState.selectedLanguage)
                 .onSuccess { text ->
                     updateState {
                         copy(

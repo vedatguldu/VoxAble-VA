@@ -35,7 +35,6 @@ dependencies {
     implementation(project(":core-ui"))
     implementation(project(":core-accessibility"))
     implementation(project(":core-database"))
-    implementation(project(":feature-ocr"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
@@ -61,9 +60,15 @@ dependencies {
 
     // Document parsers
     implementation(libs.pdfbox.android)
-    implementation(libs.epublib.core)
-    implementation(libs.poi.ooxml)
+    implementation(libs.epublib)
+    implementation(libs.apache.poi.ooxml)
     implementation(libs.jsoup)
+    implementation(libs.google.mlkit.text.recognition)
+    implementation(libs.google.mlkit.text.recognition.chinese)
+    implementation(libs.google.mlkit.text.recognition.japanese)
+    implementation(libs.google.mlkit.text.recognition.korean)
+    implementation(libs.google.mlkit.text.recognition.devanagari)
+    implementation(libs.tess4j.android)
 
     // Image loading (for EPUB images)
     implementation(libs.coil.compose)

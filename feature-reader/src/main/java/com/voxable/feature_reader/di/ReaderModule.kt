@@ -73,11 +73,19 @@ object ReaderModule {
     fun provideBookReaderRepository(
         @ApplicationContext context: Context,
         parserFactory: DocumentParserFactory,
+        embeddedImageOcrExtractor: com.voxable.feature_reader.data.parser.DocumentEmbeddedImageOcrExtractor,
         ttsEngine: WordTrackingTtsEngine,
         bookmarkDao: BookmarkDao,
         readingPositionDao: ReadingPositionDao
     ): BookReaderRepository {
-        return BookReaderRepositoryImpl(context, parserFactory, ttsEngine, bookmarkDao, readingPositionDao)
+        return BookReaderRepositoryImpl(
+            context,
+            parserFactory,
+            embeddedImageOcrExtractor,
+            ttsEngine,
+            bookmarkDao,
+            readingPositionDao
+        )
     }
 
     @Provides

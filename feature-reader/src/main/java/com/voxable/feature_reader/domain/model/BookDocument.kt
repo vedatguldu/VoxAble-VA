@@ -2,8 +2,20 @@ package com.voxable.feature_reader.domain.model
 
 import android.net.Uri
 
-enum class DocumentFormat {
-    PDF, EPUB, TXT, DOCX, HTML, DAISY
+enum class DocumentFormat(val extensions: Set<String>) {
+    PDF(setOf("pdf")),
+    EPUB(setOf("epub")),
+    TXT(setOf("txt")),
+    DOCX(setOf("docx")),
+    HTML(setOf("html", "htm", "xhtml")),
+    DAISY(setOf("xml", "ncc", "opf"));
+
+    companion object {
+        fun fromExtension(extension: String): DocumentFormat? {
+            val normalized = extension.trim().lowercase().removePrefix(".")
+            return entries.firstOrNull { normalized in it.extensions }
+        }
+    }
 }
 
 data class BookDocument(
@@ -33,5 +45,8 @@ data class DocumentMetadata(
     val publisher: String? = null,
     val language: String? = null,
     val pageCount: Int? = null,
-    val description: String? = null
+    val description: String? = null,
+    val ocrApplied: Boolean = false,
+    val embeddedImageCount: Int = 0,
+    val embeddedImageOcrSegments: Int = 0
 )

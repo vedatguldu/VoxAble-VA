@@ -8,6 +8,7 @@ import com.voxable.feature_reader.data.local.BookmarkDao
 import com.voxable.feature_reader.data.local.BookmarkEntity
 import com.voxable.feature_reader.data.local.ReadingPositionDao
 import com.voxable.feature_reader.data.local.ReadingPositionEntity
+import com.voxable.feature_reader.data.parser.DocumentEmbeddedImageOcrExtractor
 import com.voxable.feature_reader.data.parser.DocumentParserFactory
 import com.voxable.feature_reader.data.tts.WordTrackingTtsEngine
 import com.voxable.feature_reader.domain.model.BookDocument
@@ -28,12 +29,14 @@ import javax.inject.Singleton
 class BookReaderRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val parserFactory: DocumentParserFactory,
+    private val embeddedImageOcrExtractor: DocumentEmbeddedImageOcrExtractor,
     private val ttsEngine: WordTrackingTtsEngine,
     private val bookmarkDao: BookmarkDao,
     private val readingPositionDao: ReadingPositionDao
 ) : BaseRepository(), BookReaderRepository {
 
     private var currentDocument: BookDocument? = null
+    private var lastReadRequest: LastReadRequest? = null
 
     // ─── Belge ayrıştırma ───────────────────────────────────────────
 
@@ -54,7 +57,12 @@ class BookReaderRepositoryImpl @Inject constructor(
             inputStream.close()
 
             val parser = parserFactory.getParser(format)
-            val document = parser.parse(tempFile, uri.toString())
+            val parsedDocument = parser.parse(tempFile, uri.toString())
+            val document = embeddedImageOcrExtractor.appendEmbeddedImageText(
+                document = parsedDocument,
+                sourceFile = tempFile,
+                format = format
+            )
 
             currentDocument = document
             document
@@ -78,6 +86,7 @@ class BookReaderRepositoryImpl @Inject constructor(
         text: String, language: String, speed: Float, pitch: Float
     ): Resource<Unit> {
         return safeCall {
+            lastReadRequest = LastReadRequest(text, language, speed, pitch)
             val success = ttsEngine.speak(text, language, speed, pitch)
             if (!success) throw Exception("TTS başlatılamadı")
         }
@@ -88,11 +97,21 @@ class BookReaderRepositoryImpl @Inject constructor(
     }
 
     override suspend fun resumeReading(): Resource<Unit> {
-        return safeCall { /* caller kalan metni yeniden başlatmalı */ }
+        return safeCall {
+            val resumed = ttsEngine.resume()
+            if (!resumed) {
+                val request = lastReadRequest ?: throw Exception("Devam ettirilecek okuma bulunamadı")
+                val restarted = ttsEngine.speak(request.text, request.language, request.speed, request.pitch)
+                if (!restarted) throw Exception("Okuma devam ettirilemedi")
+            }
+        }
     }
 
     override suspend fun stopReading(): Resource<Unit> {
-        return safeCall { ttsEngine.stop() }
+        return safeCall {
+            lastReadRequest = null
+            ttsEngine.stop()
+        }
     }
 
     override fun isSpeaking(): Boolean = ttsEngine.isSpeaking()
@@ -188,5 +207,12 @@ class BookReaderRepositoryImpl @Inject constructor(
         characterOffset = characterOffset,
         progressPercent = progressPercent,
         updatedAt = updatedAt
+    )
+
+    private data class LastReadRequest(
+        val text: String,
+        val language: String,
+        val speed: Float,
+        val pitch: Float
     )
 }

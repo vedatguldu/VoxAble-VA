@@ -1,9 +1,22 @@
 package com.voxable.feature_ocr.presentation
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,14 +25,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,11 +46,17 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -41,11 +64,15 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.voxable.core_ui.components.LoadingIndicator
 import com.voxable.core_ui.components.VoxAbleButton
 import com.voxable.core_ui.components.VoxAbleTopBar
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,20 +82,28 @@ fun OcrScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+    var previewUri by remember { mutableStateOf<Uri?>(null) }
 
     val imagePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
+        previewUri = uri
         uri?.let { viewModel.onImageSelected(it) }
     }
 
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        viewModel.onCameraPermissionChanged(granted)
+        if (granted) viewModel.onToggleCamera()
+    }
+
     LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is OcrEvent.ShowError -> { /* Snackbar ile gösterilebilir */ }
-                is OcrEvent.TextRecognized -> { /* Metin tanındı */ }
-            }
-        }
+        viewModel.onCameraPermissionChanged(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        )
+        viewModel.events.collect { }
     }
 
     Scaffold(
@@ -87,17 +122,24 @@ fun OcrScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Kaynak seçim butonları
+            LanguageSelector(
+                selectedLanguage = state.selectedLanguage,
+                onSelected = viewModel::onLanguageSelected
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedButton(
-                    onClick = { imagePicker.launch("image/*") },
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 56.dp)
-                        .semantics { contentDescription = "Galeriden görüntü seçmek için dokunun" }
+                    onClick = {
+                        imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    },
+                    modifier = Modifier.weight(1f).heightIn(min = 56.dp).semantics {
+                        contentDescription = "Galeriden görüntü seç"
+                    }
                 ) {
                     Icon(Icons.Default.Image, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
@@ -105,11 +147,13 @@ fun OcrScreen(
                 }
 
                 OutlinedButton(
-                    onClick = { viewModel.onToggleCamera() },
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 56.dp)
-                        .semantics { contentDescription = "Kamerayı açmak için dokunun" }
+                    onClick = {
+                        if (state.hasCameraPermission) viewModel.onToggleCamera()
+                        else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    },
+                    modifier = Modifier.weight(1f).heightIn(min = 56.dp).semantics {
+                        contentDescription = "Kamera aç"
+                    }
                 ) {
                     Icon(Icons.Default.CameraAlt, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
@@ -117,7 +161,23 @@ fun OcrScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+
+            if (state.isCameraActive) {
+                CameraCaptureCard(
+                    context = context,
+                    onImageCaptured = { uri ->
+                        previewUri = uri
+                        viewModel.onImageCaptured(uri)
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            previewUri?.let { uri ->
+                SelectedImagePreview(uri = uri, context = context)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             if (state.isProcessing) {
                 LoadingIndicator()
@@ -126,17 +186,13 @@ fun OcrScreen(
                     text = "Metin tanınıyor...",
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
                 )
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Hata mesajı
             state.error?.let { error ->
                 Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics { contentDescription = "Hata: $error" }
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Hata: $error" }
                 ) {
                     Text(
                         text = error,
@@ -147,24 +203,15 @@ fun OcrScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Tanınan metin
             if (state.recognizedText.isNotEmpty()) {
                 Text(
                     text = "Tanınan Metin",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics { heading() }
+                    modifier = Modifier.fillMaxWidth().semantics { heading() }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics {
-                            contentDescription = "Tanınan metin: ${state.recognizedText}"
-                        }
-                ) {
+                Card(modifier = Modifier.fillMaxWidth()) {
                     SelectionContainer {
                         Text(
                             text = state.recognizedText,
@@ -182,17 +229,13 @@ fun OcrScreen(
                 ) {
                     VoxAbleButton(
                         text = "Kopyala",
-                        onClick = {
-                            clipboardManager.setText(AnnotatedString(state.recognizedText))
-                        },
+                        onClick = { clipboardManager.setText(AnnotatedString(state.recognizedText)) },
                         modifier = Modifier.weight(1f)
                     )
 
                     OutlinedButton(
                         onClick = { viewModel.onClearText() },
-                        modifier = Modifier
-                            .weight(1f)
-                            .heightIn(min = 56.dp)
+                        modifier = Modifier.weight(1f).heightIn(min = 56.dp)
                     ) {
                         Icon(Icons.Default.Clear, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
@@ -200,6 +243,119 @@ fun OcrScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun LanguageSelector(selectedLanguage: String, onSelected: (String) -> Unit) {
+    val languages = listOf(
+        "tr" to "Türkçe",
+        "en" to "English",
+        "de" to "Deutsch",
+        "fr" to "Français",
+        "es" to "Español",
+        "ja" to "日本語",
+        "ko" to "한국어",
+        "zh" to "中文",
+        "hi" to "हिन्दी"
+    )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text("OCR Dili", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        languages.chunked(4).forEach { rowLanguages ->
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                rowLanguages.forEach { (code, label) ->
+                    AssistChip(
+                        onClick = { onSelected(code) },
+                        label = { Text(label) },
+                        leadingIcon = if (selectedLanguage == code) {
+                            { Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                        } else null
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun SelectedImagePreview(uri: Uri, context: Context) {
+    val bitmap = remember(uri.toString()) {
+        context.contentResolver.openInputStream(uri)?.use(BitmapFactory::decodeStream)
+    }
+    bitmap?.let {
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Collections, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Seçilen görsel", style = MaterialTheme.typography.titleSmall)
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = "Seçilen OCR görseli",
+                    modifier = Modifier.fillMaxWidth().height(220.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CameraCaptureCard(context: Context, onImageCaptured: (Uri) -> Unit) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val previewView = remember { PreviewView(context) }
+    val imageCapture = remember {
+        ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build()
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+        val executor = ContextCompat.getMainExecutor(context)
+        val listener = Runnable {
+            val cameraProvider = cameraProviderFuture.get()
+            val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
+            runCatching {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageCapture)
+            }
+        }
+        cameraProviderFuture.addListener(listener, executor)
+        onDispose {
+            runCatching { cameraProviderFuture.get().unbindAll() }
+        }
+    }
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text("Kamera OCR", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(12.dp))
+            Box(modifier = Modifier.fillMaxWidth().height(280.dp)) {
+                AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            VoxAbleButton(
+                text = "Fotoğraf Çek ve Tara",
+                onClick = {
+                    val outputFile = File(context.cacheDir, "ocr_${System.currentTimeMillis()}.jpg")
+                    imageCapture.takePicture(
+                        ImageCapture.OutputFileOptions.Builder(outputFile).build(),
+                        ContextCompat.getMainExecutor(context),
+                        object : ImageCapture.OnImageSavedCallback {
+                            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                onImageCaptured(Uri.fromFile(outputFile))
+                            }
+
+                            override fun onError(exception: ImageCaptureException) {
+                            }
+                        }
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
