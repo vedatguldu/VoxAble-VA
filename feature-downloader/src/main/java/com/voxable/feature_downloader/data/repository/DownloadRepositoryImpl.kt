@@ -5,6 +5,8 @@ import android.os.Environment
 import com.voxable.core.util.Resource
 import com.voxable.core_database.dao.DownloadDao
 import com.voxable.core_database.entity.DownloadEntity
+import com.voxable.feature_downloader.data.detector.MediaDetector
+import com.voxable.feature_downloader.domain.model.MediaInfo
 import com.voxable.feature_downloader.domain.repository.DownloadRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -22,8 +24,20 @@ import javax.inject.Singleton
 class DownloadRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val okHttpClient: OkHttpClient,
-    private val downloadDao: DownloadDao
+    private val downloadDao: DownloadDao,
+    private val mediaDetector: MediaDetector
 ) : DownloadRepository {
+
+    override suspend fun detectMedia(url: String): Resource<MediaInfo> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val info = mediaDetector.detect(url)
+                Resource.Success(info)
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Medya algılanamadı")
+            }
+        }
+    }
 
     override suspend fun startDownload(url: String, fileName: String): Resource<Long> {
         return withContext(Dispatchers.IO) {

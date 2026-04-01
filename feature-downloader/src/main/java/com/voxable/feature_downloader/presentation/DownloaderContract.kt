@@ -2,9 +2,14 @@ package com.voxable.feature_downloader.presentation
 
 import com.voxable.core.base.UiEvent
 import com.voxable.core.base.UiState
+import com.voxable.feature_downloader.domain.model.MediaFormat
+import com.voxable.feature_downloader.domain.model.MediaInfo
 
 data class DownloaderState(
     val url: String = "",
+    val isDetecting: Boolean = false,
+    val mediaInfo: MediaInfo? = null,
+    val selectedFormat: MediaFormat? = null,
     val downloads: List<DownloadItem> = emptyList(),
     val isDownloading: Boolean = false,
     val error: String? = null
@@ -14,10 +19,11 @@ data class DownloadItem(
     val id: Long,
     val fileName: String,
     val url: String,
-    val progress: Float = 0f, // 0.0 - 1.0
+    val progress: Float = 0f,
     val totalBytes: Long = 0L,
     val downloadedBytes: Long = 0L,
-    val status: DownloadStatus = DownloadStatus.PENDING
+    val status: DownloadStatus = DownloadStatus.PENDING,
+    val formatLabel: String = ""
 )
 
 enum class DownloadStatus {
