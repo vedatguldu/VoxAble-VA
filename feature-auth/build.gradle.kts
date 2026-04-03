@@ -64,7 +64,7 @@ dependencies {
 
     // Google Sign-In (Credential Manager)
     implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services)
+    implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
 
     // Coroutines
