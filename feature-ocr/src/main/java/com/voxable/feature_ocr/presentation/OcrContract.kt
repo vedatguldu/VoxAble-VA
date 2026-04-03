@@ -2,9 +2,14 @@ package com.voxable.feature_ocr.presentation
 
 import com.voxable.core.base.UiEvent
 import com.voxable.core.base.UiState
+import com.voxable.feature_ocr.domain.model.DetectedBarcode
+import com.voxable.feature_ocr.domain.model.DetectedColor
 
 data class OcrState(
     val recognizedText: String = "",
+    val analysisSummary: String = "",
+    val detectedColors: List<DetectedColor> = emptyList(),
+    val detectedBarcodes: List<DetectedBarcode> = emptyList(),
     val isProcessing: Boolean = false,
     val isCameraActive: Boolean = false,
     val hasCameraPermission: Boolean = false,

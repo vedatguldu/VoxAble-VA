@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.google.mlkit.text.recognition.devanagari)
     implementation(libs.google.mlkit.text.recognition.japanese)
     implementation(libs.google.mlkit.text.recognition.korean)
+    implementation(libs.google.mlkit.barcode.scanning)
 
     // Tesseract OCR
     implementation(libs.tess4j.android)

@@ -3,7 +3,11 @@ package com.voxable.feature_ocr.data.repository
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.net.Uri
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
@@ -14,6 +18,10 @@ import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.googlecode.tesseract.android.TessBaseAPI
 import com.voxable.core.util.Resource
+import com.voxable.core.util.map
+import com.voxable.feature_ocr.domain.model.DetectedBarcode
+import com.voxable.feature_ocr.domain.model.DetectedColor
+import com.voxable.feature_ocr.domain.model.OcrImageAnalysis
 import com.voxable.feature_ocr.domain.repository.OcrRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -28,20 +36,58 @@ class OcrRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context
 ) : OcrRepository {
 
+    private data class NamedColor(
+        val name: String,
+        val rgb: Int,
+        val hex: String
+    )
+
+    private val namedColors = listOf(
+        NamedColor("Beyaz", Color.rgb(245, 245, 245), "#F5F5F5"),
+        NamedColor("Siyah", Color.rgb(33, 33, 33), "#212121"),
+        NamedColor("Gri", Color.rgb(128, 128, 128), "#808080"),
+        NamedColor("Kırmızı", Color.rgb(211, 47, 47), "#D32F2F"),
+        NamedColor("Turuncu", Color.rgb(245, 124, 0), "#F57C00"),
+        NamedColor("Sarı", Color.rgb(251, 192, 45), "#FBC02D"),
+        NamedColor("Yeşil", Color.rgb(56, 142, 60), "#388E3C"),
+        NamedColor("Turkuaz", Color.rgb(0, 137, 123), "#00897B"),
+        NamedColor("Mavi", Color.rgb(25, 118, 210), "#1976D2"),
+        NamedColor("Mor", Color.rgb(123, 31, 162), "#7B1FA2"),
+        NamedColor("Pembe", Color.rgb(194, 24, 91), "#C2185B"),
+        NamedColor("Kahverengi", Color.rgb(93, 64, 55), "#5D4037")
+    )
+
     override suspend fun recognizeTextFromImage(imageUri: Uri, language: String): Resource<String> {
+        return analyzeImage(imageUri, language).map { it.recognizedText }
+    }
+
+    override suspend fun analyzeImage(imageUri: Uri, language: String): Resource<OcrImageAnalysis> {
         return withContext(Dispatchers.IO) {
             runCatching {
                 val bitmap = context.contentResolver.openInputStream(imageUri)?.use(BitmapFactory::decodeStream)
                     ?: return@withContext Resource.Error("Görüntü açılamadı")
                 try {
-                    val text = recognizeHybrid(bitmap, language)
-                    if (text.isBlank()) Resource.Error("Metin tanınamadı")
-                    else Resource.Success(correctText(text, language))
+                    val recognizedText = correctText(recognizeHybrid(bitmap, language), language)
+                    val detectedBarcodes = detectBarcodes(bitmap)
+                    val detectedColors = extractDominantColors(bitmap)
+
+                    if (recognizedText.isBlank() && detectedBarcodes.isEmpty() && detectedColors.isEmpty()) {
+                        Resource.Error("Görüntüden metin, barkod veya baskın renk çıkarılamadı")
+                    } else {
+                        Resource.Success(
+                            OcrImageAnalysis(
+                                recognizedText = recognizedText,
+                                detectedColors = detectedColors,
+                                detectedBarcodes = detectedBarcodes,
+                                summary = buildSummary(recognizedText, detectedBarcodes, detectedColors)
+                            )
+                        )
+                    }
                 } finally {
                     if (!bitmap.isRecycled) bitmap.recycle()
                 }
             }.getOrElse { throwable ->
-                Resource.Error(throwable.message ?: "OCR sırasında hata oluştu", throwable)
+                Resource.Error(throwable.message ?: "Görüntü analizi sırasında hata oluştu", throwable)
             }
         }
     }
@@ -116,6 +162,107 @@ class OcrRepositoryImpl @Inject constructor(
         return compact.count { it.isLetterOrDigit() } * 2 - compact.count { !it.isLetterOrDigit() } + compact.length
     }
 
+    private suspend fun detectBarcodes(bitmap: Bitmap): List<DetectedBarcode> {
+        val options = BarcodeScannerOptions.Builder()
+            .setBarcodeFormats(
+                Barcode.FORMAT_QR_CODE,
+                Barcode.FORMAT_AZTEC,
+                Barcode.FORMAT_DATA_MATRIX,
+                Barcode.FORMAT_PDF417,
+                Barcode.FORMAT_CODE_128,
+                Barcode.FORMAT_CODE_39,
+                Barcode.FORMAT_EAN_13,
+                Barcode.FORMAT_EAN_8,
+                Barcode.FORMAT_UPC_A,
+                Barcode.FORMAT_UPC_E
+            )
+            .enableAllPotentialBarcodes()
+            .build()
+        val scanner = BarcodeScanning.getClient(options)
+
+        return try {
+            scanner.process(InputImage.fromBitmap(bitmap, 0)).await()
+                .mapNotNull { barcode ->
+                    val rawValue = barcode.rawValue ?: return@mapNotNull null
+                    DetectedBarcode(
+                        rawValue = rawValue,
+                        displayValue = barcode.displayValue ?: rawValue,
+                        formatLabel = barcode.format.toFormatLabel(),
+                        valueTypeLabel = barcode.valueType.toValueTypeLabel()
+                    )
+                }
+                .distinctBy { it.rawValue }
+        } finally {
+            scanner.close()
+        }
+    }
+
+    private fun extractDominantColors(bitmap: Bitmap): List<DetectedColor> {
+        val scaled = Bitmap.createScaledBitmap(bitmap, 48, 48, true)
+        return try {
+            val counts = mutableMapOf<NamedColor, Int>()
+            var sampled = 0
+
+            for (x in 0 until scaled.width) {
+                for (y in 0 until scaled.height) {
+                    val pixel = scaled.getPixel(x, y)
+                    if (Color.alpha(pixel) < 96) continue
+                    val nearest = nearestColor(pixel)
+                    counts[nearest] = (counts[nearest] ?: 0) + 1
+                    sampled++
+                }
+            }
+
+            if (sampled == 0) return emptyList()
+
+            counts.entries
+                .sortedByDescending { it.value }
+                .take(4)
+                .map { (color, count) ->
+                    DetectedColor(
+                        name = color.name,
+                        hex = color.hex,
+                        coverage = count.toFloat() / sampled.toFloat()
+                    )
+                }
+                .filter { it.coverage >= 0.08f }
+        } finally {
+            if (scaled !== bitmap && !scaled.isRecycled) {
+                scaled.recycle()
+            }
+        }
+    }
+
+    private fun nearestColor(pixel: Int): NamedColor {
+        val red = Color.red(pixel)
+        val green = Color.green(pixel)
+        val blue = Color.blue(pixel)
+        return namedColors.minBy { named ->
+            val dr = red - Color.red(named.rgb)
+            val dg = green - Color.green(named.rgb)
+            val db = blue - Color.blue(named.rgb)
+            dr * dr + dg * dg + db * db
+        }
+    }
+
+    private fun buildSummary(
+        recognizedText: String,
+        detectedBarcodes: List<DetectedBarcode>,
+        detectedColors: List<DetectedColor>
+    ): String {
+        val parts = mutableListOf<String>()
+        if (recognizedText.isNotBlank()) {
+            parts += "Metin algılandı"
+        }
+        if (detectedBarcodes.isNotEmpty()) {
+            parts += "${detectedBarcodes.size} barkod bulundu"
+        }
+        if (detectedColors.isNotEmpty()) {
+            parts += "Baskın renkler: ${detectedColors.joinToString(", ") { it.name }}"
+        }
+        return parts.joinToString(". ")
+    }
+
     private fun correctText(text: String, language: String): String {
         var result = text
             .replace("\u00A0", " ")
@@ -139,5 +286,34 @@ class OcrRepositoryImpl @Inject constructor(
         "it", "ita" -> "ita"
         "pt", "por" -> "por"
         else -> "eng"
+    }
+
+    private fun Int.toFormatLabel(): String = when (this) {
+        Barcode.FORMAT_QR_CODE -> "QR Kod"
+        Barcode.FORMAT_AZTEC -> "Aztec"
+        Barcode.FORMAT_DATA_MATRIX -> "Data Matrix"
+        Barcode.FORMAT_PDF417 -> "PDF417"
+        Barcode.FORMAT_CODE_128 -> "Code 128"
+        Barcode.FORMAT_CODE_39 -> "Code 39"
+        Barcode.FORMAT_EAN_13 -> "EAN-13"
+        Barcode.FORMAT_EAN_8 -> "EAN-8"
+        Barcode.FORMAT_UPC_A -> "UPC-A"
+        Barcode.FORMAT_UPC_E -> "UPC-E"
+        else -> "Barkod"
+    }
+
+    private fun Int.toValueTypeLabel(): String = when (this) {
+        Barcode.TYPE_URL -> "Bağlantı"
+        Barcode.TYPE_WIFI -> "Wi-Fi"
+        Barcode.TYPE_CONTACT_INFO -> "Kişi"
+        Barcode.TYPE_EMAIL -> "E-posta"
+        Barcode.TYPE_PHONE -> "Telefon"
+        Barcode.TYPE_PRODUCT -> "Ürün"
+        Barcode.TYPE_SMS -> "SMS"
+        Barcode.TYPE_TEXT -> "Metin"
+        Barcode.TYPE_GEO -> "Konum"
+        Barcode.TYPE_CALENDAR_EVENT -> "Takvim"
+        Barcode.TYPE_DRIVER_LICENSE -> "Kimlik"
+        else -> "Genel"
     }
 }

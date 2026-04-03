@@ -2,6 +2,7 @@
 agp = "8.5.2"
 kotlin = "2.0.10"
 ksp = "2.0.10-1.0.24"
+google-services = "4.4.4"
 
 # AndroidX
 core-ktx = "1.13.1"
@@ -46,6 +47,7 @@ mlkit-text-chinese = "16.0.1"
 mlkit-text-devanagari = "16.0.1"
 mlkit-text-japanese = "16.0.1"
 mlkit-text-korean = "16.0.1"
+mlkit-barcode = "17.3.0"
 
 # PDF / EPUB / DOCX parsers
 pdfbox-android = "2.0.27.0"
@@ -167,6 +169,7 @@ google-mlkit-text-recognition-chinese = { group = "com.google.mlkit", name = "te
 google-mlkit-text-recognition-devanagari = { group = "com.google.mlkit", name = "text-recognition-devanagari", version.ref = "mlkit-text-devanagari" }
 google-mlkit-text-recognition-japanese = { group = "com.google.mlkit", name = "text-recognition-japanese", version.ref = "mlkit-text-japanese" }
 google-mlkit-text-recognition-korean = { group = "com.google.mlkit", name = "text-recognition-korean", version.ref = "mlkit-text-korean" }
+google-mlkit-barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkit-barcode" }
 
 # PDF / EPUB / DOCX parsers
 pdfbox-android = { group = "org.apache.pdfbox", name = "pdfbox-android", version.ref = "pdfbox-android" }
@@ -209,3 +212,14 @@ network = ["okhttp", "okhttp-logging-interceptor", "retrofit", "retrofit-kotlinx
 coroutines = ["kotlinx-coroutines-core", "kotlinx-coroutines-android"]
 media = ["media3-exoplayer", "media3-ui", "media3-session"]
 mlkit = ["google-mlkit-text-recognition", "google-mlkit-text-recognition-chinese", "google-mlkit-text-recognition-devanagari", "google-mlkit-text-recognition-japanese", "google-mlkit-text-recognition-korean"]
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

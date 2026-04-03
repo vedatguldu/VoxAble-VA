@@ -4,13 +4,13 @@ import android.net.Uri
 import com.voxable.core.base.BaseViewModel
 import com.voxable.core.util.onError
 import com.voxable.core.util.onSuccess
-import com.voxable.feature_ocr.domain.usecase.RecognizeTextUseCase
+import com.voxable.feature_ocr.domain.usecase.AnalyzeImageUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class OcrViewModel @Inject constructor(
-    private val recognizeTextUseCase: RecognizeTextUseCase
+    private val analyzeImageUseCase: AnalyzeImageUseCase
 ) : BaseViewModel<OcrState, OcrEvent>(OcrState()) {
 
     fun onCameraPermissionChanged(granted: Boolean) {
@@ -27,7 +27,7 @@ class OcrViewModel @Inject constructor(
     }
 
     fun onImageSelected(uri: Uri) {
-        updateState { copy(capturedImageUri = uri.toString()) }
+        updateState { copy(capturedImageUri = uri.toString(), isCameraActive = false) }
         recognizeText(uri)
     }
 
@@ -39,21 +39,44 @@ class OcrViewModel @Inject constructor(
     }
 
     fun onClearText() {
-        updateState { copy(recognizedText = "", capturedImageUri = null) }
+        updateState {
+            copy(
+                recognizedText = "",
+                analysisSummary = "",
+                detectedColors = emptyList(),
+                detectedBarcodes = emptyList(),
+                capturedImageUri = null,
+                error = null
+            )
+        }
     }
 
     private fun recognizeText(uri: Uri) {
         launch {
-            updateState { copy(isProcessing = true, error = null) }
-            recognizeTextUseCase(uri, currentState.selectedLanguage)
-                .onSuccess { text ->
+            updateState {
+                copy(
+                    isProcessing = true,
+                    error = null,
+                    recognizedText = "",
+                    analysisSummary = "",
+                    detectedColors = emptyList(),
+                    detectedBarcodes = emptyList()
+                )
+            }
+            analyzeImageUseCase(uri, currentState.selectedLanguage)
+                .onSuccess { analysis ->
                     updateState {
                         copy(
-                            recognizedText = text,
+                            recognizedText = analysis.recognizedText,
+                            analysisSummary = analysis.summary,
+                            detectedColors = analysis.detectedColors,
+                            detectedBarcodes = analysis.detectedBarcodes,
                             isProcessing = false
                         )
                     }
-                    sendEvent(OcrEvent.TextRecognized(text))
+                    if (analysis.recognizedText.isNotBlank()) {
+                        sendEvent(OcrEvent.TextRecognized(analysis.recognizedText))
+                    }
                 }
                 .onError { message ->
                     updateState {

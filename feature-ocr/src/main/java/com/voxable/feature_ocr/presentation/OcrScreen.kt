@@ -31,6 +31,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
@@ -42,6 +44,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -72,6 +75,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.voxable.core_ui.components.LoadingIndicator
 import com.voxable.core_ui.components.VoxAbleButton
 import com.voxable.core_ui.components.VoxAbleTopBar
+import com.voxable.feature_ocr.domain.model.DetectedBarcode
+import com.voxable.feature_ocr.domain.model.DetectedColor
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -203,6 +208,11 @@ fun OcrScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
+            if (state.analysisSummary.isNotBlank()) {
+                SummaryCard(summary = state.analysisSummary)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             if (state.recognizedText.isNotEmpty()) {
                 Text(
                     text = "Tanınan Metin",
@@ -243,7 +253,46 @@ fun OcrScreen(
                     }
                 }
             }
+
+            if (state.detectedBarcodes.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    text = "QR / Barkod Sonuçları",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.fillMaxWidth().semantics { heading() }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                BarcodeSection(barcodes = state.detectedBarcodes)
+            }
+
+            if (state.detectedColors.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    text = "Baskın Renkler",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.fillMaxWidth().semantics { heading() }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                ColorSection(colors = state.detectedColors)
+            }
         }
+    }
+}
+
+@Composable
+private fun SummaryCard(summary: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Text(
+            text = summary,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
@@ -299,6 +348,68 @@ private fun SelectedImagePreview(uri: Uri, context: Context) {
                     contentDescription = "Seçilen OCR görseli",
                     modifier = Modifier.fillMaxWidth().height(220.dp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BarcodeSection(barcodes: List<DetectedBarcode>) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        barcodes.forEach { barcode ->
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.QrCode2, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "${barcode.formatLabel} • ${barcode.valueTypeLabel}",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SelectionContainer {
+                        Text(
+                            text = barcode.displayValue,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColorSection(colors: List<DetectedColor>) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        colors.chunked(2).forEach { rowColors ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                rowColors.forEach { color ->
+                    OutlinedCard(modifier = Modifier.weight(1f)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Palette, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = color.name,
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "${(color.coverage * 100).toInt()} kapsama • ${color.hex}",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+                if (rowColors.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
             }
         }
     }
