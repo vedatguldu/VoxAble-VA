@@ -1,5 +1,6 @@
 package com.voxable.feature_media.data.repository
 
+import android.content.Context
 import android.net.Uri
 import com.voxable.feature_media.data.loader.SubtitleLoader
 import com.voxable.feature_media.data.manager.ExoPlayerManager
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 class MediaPlayerRepositoryImpl(
+    private val context: Context,
     private val exoPlayerManager: ExoPlayerManager,
     private val playlistParser: M3UPlaylistParser,
     private val subtitleLoader: SubtitleLoader
@@ -164,10 +166,7 @@ class MediaPlayerRepositoryImpl(
 
     private suspend fun loadPlaylistFile(uri: Uri): String {
         return try {
-            val context = android.content.ContextCompat::class.java.classLoader?.loadClass(
-                "android.content.Context"
-            )
-            ""
+            context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } ?: ""
         } catch (e: Exception) {
             ""
         }

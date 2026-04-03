@@ -39,11 +39,12 @@ object MediaModule {
     @Provides
     @Singleton
     fun provideMediaPlayerRepository(
+        @ApplicationContext context: Context,
         exoPlayerManager: ExoPlayerManager,
         playlistParser: M3UPlaylistParser,
         subtitleLoader: SubtitleLoader
     ): MediaPlayerRepository {
-        return MediaPlayerRepositoryImpl(exoPlayerManager, playlistParser, subtitleLoader)
+        return MediaPlayerRepositoryImpl(context, exoPlayerManager, playlistParser, subtitleLoader)
     }
 
     @Provides

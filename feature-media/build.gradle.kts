@@ -43,14 +43,14 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     // Compose
-    val composeBom = platform(libs.androidx.compose.bom)
+    val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.material.icons.extended)
-    debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.graphics)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
+    debugImplementation(libs.compose.ui.tooling)
 
     // Hilt
     implementation(libs.hilt.android)
