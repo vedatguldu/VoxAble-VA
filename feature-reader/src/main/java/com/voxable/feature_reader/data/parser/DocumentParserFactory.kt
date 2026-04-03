@@ -13,6 +13,9 @@ class DocumentParserFactory @Inject constructor() {
             DocumentFormat.DOCX -> DocxParser()
             DocumentFormat.HTML -> HtmlParser()
             DocumentFormat.DAISY -> DaisyParser()
+            DocumentFormat.FB2 -> Fb2Parser()
+            DocumentFormat.CBZ -> CbzParser()
+            DocumentFormat.RTF -> RtfParser()
         }
     }
 
@@ -24,6 +27,9 @@ class DocumentParserFactory @Inject constructor() {
             "docx" -> DocumentFormat.DOCX
             "html", "htm", "xhtml" -> DocumentFormat.HTML
             "xml", "ncc", "opf" -> DocumentFormat.DAISY
+            "fb2" -> DocumentFormat.FB2
+            "cbz" -> DocumentFormat.CBZ
+            "rtf" -> DocumentFormat.RTF
             else -> DocumentFormat.TXT
         }
     }

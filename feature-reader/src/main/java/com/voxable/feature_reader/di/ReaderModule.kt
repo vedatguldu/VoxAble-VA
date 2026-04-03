@@ -3,6 +3,7 @@ package com.voxable.feature_reader.di
 import android.content.Context
 import androidx.room.Room
 import com.voxable.feature_reader.data.local.BookmarkDao
+import com.voxable.feature_reader.data.local.HighlightDao
 import com.voxable.feature_reader.data.local.ReaderDatabase
 import com.voxable.feature_reader.data.local.ReadingPositionDao
 import com.voxable.feature_reader.data.ocr.HybridOcrEngine
@@ -24,7 +25,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object ReaderModule {
 
-    // ─── Database ───────────────────────────────────────────────────
+    // \u2500\u2500\u2500 Database \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
     @Provides
     @Singleton
@@ -35,7 +36,7 @@ object ReaderModule {
             context,
             ReaderDatabase::class.java,
             "voxable_reader_database"
-        ).fallbackToDestructiveMigration().build()
+        ).addMigrations(ReaderDatabase.MIGRATION_1_2).build()
     }
 
     @Provides
@@ -46,7 +47,11 @@ object ReaderModule {
     @Singleton
     fun provideReadingPositionDao(db: ReaderDatabase): ReadingPositionDao = db.readingPositionDao()
 
-    // ─── Engines ────────────────────────────────────────────────────
+    @Provides
+    @Singleton
+    fun provideHighlightDao(db: ReaderDatabase): HighlightDao = db.highlightDao()
+
+    // \u2500\u2500\u2500 Engines \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
     @Provides
     @Singleton
@@ -58,7 +63,7 @@ object ReaderModule {
     @Singleton
     fun provideDocumentParserFactory(): DocumentParserFactory = DocumentParserFactory()
 
-    // ─── Repositories ───────────────────────────────────────────────
+    // \u2500\u2500\u2500 Repositories \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
     @Provides
     @Singleton

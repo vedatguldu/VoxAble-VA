@@ -31,3 +31,20 @@ data class ReadingPositionEntity(
     val progressPercent: Float = 0f,
     val updatedAt: Long = System.currentTimeMillis()
 )
+
+@Entity(
+    tableName = "highlights",
+    indices = [Index(value = ["documentId"])]
+)
+data class HighlightEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val documentId: String,
+    val chapterIndex: Int,
+    val startOffset: Int,
+    val endOffset: Int,
+    val highlightedText: String,
+    val color: Int,
+    val note: String? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)

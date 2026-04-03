@@ -8,7 +8,10 @@ enum class DocumentFormat(val extensions: Set<String>) {
     TXT(setOf("txt")),
     DOCX(setOf("docx")),
     HTML(setOf("html", "htm", "xhtml")),
-    DAISY(setOf("xml", "ncc", "opf"));
+    DAISY(setOf("xml", "ncc", "opf")),
+    FB2(setOf("fb2")),
+    CBZ(setOf("cbz")),
+    RTF(setOf("rtf"));
 
     companion object {
         fun fromExtension(extension: String): DocumentFormat? {
