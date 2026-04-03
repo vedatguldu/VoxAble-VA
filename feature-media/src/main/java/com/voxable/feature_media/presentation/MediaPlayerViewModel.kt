@@ -16,11 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import android.net.Uri
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 
-@HiltViewModel
-class MediaPlayerViewModel @Inject constructor(
+class MediaPlayerViewModel(
     private val repository: MediaPlayerRepository,
     private val playMediaUseCase: PlayMediaUseCase,
     private val pauseMediaUseCase: PauseMediaUseCase,

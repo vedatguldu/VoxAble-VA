@@ -35,10 +35,10 @@ dependencies {
 
     // Network
     implementation(libs.okhttp)
-    implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.okhttp.logging)
     implementation(libs.retrofit)
-    implementation(libs.retrofit.kotlinx.serialization)
-    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.retrofit.kotlin.serialization)
+    implementation(libs.kotlin.serialization.json)
 
     // Firebase
     implementation(platform(libs.firebase.bom))
