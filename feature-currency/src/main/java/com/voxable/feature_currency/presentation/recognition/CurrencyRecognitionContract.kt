@@ -8,6 +8,7 @@ data class CurrencyRecognitionState(
     val isLoading: Boolean = false,
     val hasCameraPermission: Boolean = false,
     val isCameraActive: Boolean = false,
+    val liveScanEnabled: Boolean = false,
     val capturedImageUri: String? = null,
     val recognitionResult: CurrencyRecognitionResult? = null,
     val isSpeaking: Boolean = false,

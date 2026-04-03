@@ -47,6 +47,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -78,6 +79,7 @@ import com.voxable.core_ui.components.VoxAbleTopBar
 import com.voxable.feature_ocr.domain.model.DetectedBarcode
 import com.voxable.feature_ocr.domain.model.DetectedColor
 import java.io.File
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -169,8 +171,15 @@ fun OcrScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             if (state.isCameraActive) {
+                LiveScanToggle(
+                    liveScanEnabled = state.liveScanEnabled,
+                    onToggle = { viewModel.onToggleLiveScan() }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
                 CameraCaptureCard(
                     context = context,
+                    liveScanEnabled = state.liveScanEnabled,
                     onImageCaptured = { uri ->
                         previewUri = uri
                         viewModel.onImageCaptured(uri)
@@ -275,6 +284,35 @@ fun OcrScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 ColorSection(colors = state.detectedColors)
             }
+        }
+    }
+}
+
+@Composable
+private fun LiveScanToggle(
+    liveScanEnabled: Boolean,
+    onToggle: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Canlı Tarama",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Switch(
+                checked = liveScanEnabled,
+                onCheckedChange = { onToggle() }
+            )
         }
     }
 }
@@ -416,7 +454,11 @@ private fun ColorSection(colors: List<DetectedColor>) {
 }
 
 @Composable
-private fun CameraCaptureCard(context: Context, onImageCaptured: (Uri) -> Unit) {
+private fun CameraCaptureCard(
+    context: Context,
+    liveScanEnabled: Boolean,
+    onImageCaptured: (Uri) -> Unit
+) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val previewView = remember { PreviewView(context) }
     val imageCapture = remember {
@@ -437,6 +479,25 @@ private fun CameraCaptureCard(context: Context, onImageCaptured: (Uri) -> Unit) 
         cameraProviderFuture.addListener(listener, executor)
         onDispose {
             runCatching { cameraProviderFuture.get().unbindAll() }
+        }
+    }
+
+    LaunchedEffect(liveScanEnabled) {
+        while (liveScanEnabled) {
+            delay(2500)
+            val outputFile = File(context.cacheDir, "ocr_live_${System.currentTimeMillis()}.jpg")
+            imageCapture.takePicture(
+                ImageCapture.OutputFileOptions.Builder(outputFile).build(),
+                ContextCompat.getMainExecutor(context),
+                object : ImageCapture.OnImageSavedCallback {
+                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                        onImageCaptured(Uri.fromFile(outputFile))
+                    }
+
+                    override fun onError(exception: ImageCaptureException) {
+                    }
+                }
+            )
         }
     }
 

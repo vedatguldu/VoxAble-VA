@@ -10,6 +10,7 @@ data class OcrState(
     val analysisSummary: String = "",
     val detectedColors: List<DetectedColor> = emptyList(),
     val detectedBarcodes: List<DetectedBarcode> = emptyList(),
+    val liveScanEnabled: Boolean = false,
     val isProcessing: Boolean = false,
     val isCameraActive: Boolean = false,
     val hasCameraPermission: Boolean = false,

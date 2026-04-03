@@ -19,7 +19,9 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Card
@@ -53,6 +55,8 @@ fun HomeScreen(
     onNavigateToReader: () -> Unit,
     onNavigateToMedia: () -> Unit,
     onNavigateToOcr: () -> Unit,
+    onNavigateToColorRecognition: () -> Unit,
+    onNavigateToQrScanner: () -> Unit,
     onNavigateToCurrency: () -> Unit,
     onNavigateToConverter: () -> Unit,
     onNavigateToDownloader: () -> Unit,
@@ -65,6 +69,8 @@ fun HomeScreen(
         FeatureItem("Okuyucu", Icons.Default.MenuBook, "Metin okuyucu özelliğini aç", onNavigateToReader),
         FeatureItem("Medya", Icons.Default.PlayCircle, "Medya oynatıcıyı aç", onNavigateToMedia),
         FeatureItem("OCR", Icons.Default.CameraAlt, "Metin tanıma özelliğini aç", onNavigateToOcr),
+        FeatureItem("Renk Tanıma", Icons.Default.Palette, "Görselde baskın renkleri analiz et", onNavigateToColorRecognition),
+        FeatureItem("QR/Barkod", Icons.Default.QrCode2, "QR kod ve barkod tara", onNavigateToQrScanner),
         FeatureItem("Döviz", Icons.Default.CurrencyExchange, "Döviz kurlarını görüntüle", onNavigateToCurrency),
         FeatureItem("Dönüştürücü", Icons.Default.SwapHoriz, "Birim dönüştürücüyü aç", onNavigateToConverter),
         FeatureItem("İndirici", Icons.Default.Download, "Dosya indiriciyi aç", onNavigateToDownloader),

@@ -44,6 +44,8 @@ fun VoxAbleNavHost(
             onNavigateToReader = { navController.navigate("reader") },
             onNavigateToMedia = { navController.navigate("media") },
             onNavigateToOcr = { navController.navigate("ocr") },
+            onNavigateToColorRecognition = { navController.navigate("ocr") },
+            onNavigateToQrScanner = { navController.navigate("ocr") },
             onNavigateToCurrency = { navController.navigate("currency") },
             onNavigateToConverter = { navController.navigate("converter") },
             onNavigateToDownloader = { navController.navigate("downloader") },

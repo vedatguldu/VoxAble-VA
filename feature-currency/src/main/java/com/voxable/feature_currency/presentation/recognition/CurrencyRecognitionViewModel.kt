@@ -26,11 +26,24 @@ class CurrencyRecognitionViewModel @Inject constructor(
 
     fun onToggleCamera() {
         if (!currentState.hasCameraPermission) return
-        updateState { copy(isCameraActive = !isCameraActive) }
+        updateState {
+            val nextActive = !isCameraActive
+            copy(
+                isCameraActive = nextActive,
+                liveScanEnabled = if (nextActive) liveScanEnabled else false
+            )
+        }
+    }
+
+    fun onToggleLiveScan() {
+        updateState {
+            if (!isCameraActive) copy(liveScanEnabled = false)
+            else copy(liveScanEnabled = !liveScanEnabled)
+        }
     }
 
     fun onImageCaptured(uri: Uri) {
-        updateState { copy(capturedImageUri = uri.toString(), isCameraActive = false) }
+        updateState { copy(capturedImageUri = uri.toString(), isCameraActive = !liveScanEnabled) }
         recognizeFromImage(uri)
     }
 

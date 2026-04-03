@@ -38,6 +38,10 @@ class OcrViewModel @Inject constructor(
         }
     }
 
+    fun onToggleLiveScan() {
+        updateState { copy(liveScanEnabled = !liveScanEnabled) }
+    }
+
     fun onClearText() {
         updateState {
             copy(

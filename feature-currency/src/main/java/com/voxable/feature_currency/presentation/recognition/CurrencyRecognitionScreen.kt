@@ -71,6 +71,7 @@ import coil.compose.AsyncImage
 import com.voxable.core_ui.components.LoadingIndicator
 import com.voxable.core_ui.components.VoxAbleTopBar
 import java.io.File
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,7 +124,14 @@ fun CurrencyRecognitionScreen(
             // Kamera önizleme veya yakalanan görüntü
             item {
                 if (state.isCameraActive && state.hasCameraPermission) {
+                    LiveScanToggle(
+                        enabled = state.liveScanEnabled,
+                        onToggle = { viewModel.onToggleLiveScan() }
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     CameraPreviewCard(
+                        liveScanEnabled = state.liveScanEnabled,
                         onImageCaptured = { uri -> viewModel.onImageCaptured(uri) }
                     )
                 } else if (state.capturedImageUri != null) {
@@ -230,6 +238,40 @@ fun CurrencyRecognitionScreen(
 }
 
 @Composable
+private fun LiveScanToggle(
+    enabled: Boolean,
+    onToggle: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Canlı Tarama",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Switch(
+                checked = enabled,
+                onCheckedChange = { onToggle() },
+                modifier = Modifier.semantics {
+                    contentDescription = if (enabled) "Canlı tarama açık" else "Canlı tarama kapalı"
+                }
+            )
+        }
+    }
+}
+
+@Composable
 private fun AutoSpeakToggle(
     autoSpeak: Boolean,
     onToggle: () -> Unit
@@ -276,6 +318,7 @@ private fun AutoSpeakToggle(
 
 @Composable
 private fun CameraPreviewCard(
+    liveScanEnabled: Boolean,
     onImageCaptured: (Uri) -> Unit
 ) {
     val context = LocalContext.current
@@ -355,6 +398,26 @@ private fun CameraPreviewCard(
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
+        }
+    }
+
+    LaunchedEffect(liveScanEnabled) {
+        while (liveScanEnabled) {
+            delay(2500)
+            val capture = imageCapture ?: continue
+            val photoFile = File(context.cacheDir, "currency_live_${System.currentTimeMillis()}.jpg")
+            val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+            capture.takePicture(
+                outputOptions,
+                ContextCompat.getMainExecutor(context),
+                object : ImageCapture.OnImageSavedCallback {
+                    override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                        onImageCaptured(Uri.fromFile(photoFile))
+                    }
+
+                    override fun onError(exception: ImageCaptureException) {}
+                }
+            )
         }
     }
 }
