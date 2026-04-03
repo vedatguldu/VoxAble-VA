@@ -63,6 +63,9 @@ dependencies {
     // ML Kit Text Recognition (offline after first model download)
     implementation(libs.google.mlkit.text.recognition)
 
+    // TensorFlow Lite (banknot modeli)
+    implementation(libs.tensorflow.lite)
+
     // Image loading
     implementation(libs.coil.compose)
 

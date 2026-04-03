@@ -49,6 +49,9 @@ mlkit-text-japanese = "16.0.1"
 mlkit-text-korean = "16.0.1"
 mlkit-barcode = "17.3.0"
 
+# TensorFlow Lite
+tflite = "2.14.0"
+
 # PDF / EPUB / DOCX parsers
 pdfbox-android = "2.0.27.0"
 epublib = "4.0"
@@ -168,6 +171,9 @@ google-mlkit-text-recognition-devanagari = { group = "com.google.mlkit", name = 
 google-mlkit-text-recognition-japanese = { group = "com.google.mlkit", name = "text-recognition-japanese", version.ref = "mlkit-text-japanese" }
 google-mlkit-text-recognition-korean = { group = "com.google.mlkit", name = "text-recognition-korean", version.ref = "mlkit-text-korean" }
 google-mlkit-barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkit-barcode" }
+
+# TensorFlow Lite
+tensorflow-lite = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "tflite" }
 
 # PDF / EPUB / DOCX parsers
 pdfbox-android = { group = "org.apache.pdfbox", name = "pdfbox-android", version.ref = "pdfbox-android" }
