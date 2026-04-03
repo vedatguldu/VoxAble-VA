@@ -7,11 +7,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
 import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 @Singleton
 class WordTrackingTtsEngine @Inject constructor(
@@ -29,32 +31,43 @@ class WordTrackingTtsEngine @Inject constructor(
 
     private suspend fun ensureInitialized(): TextToSpeech {
         tts?.let { return it }
-        return suspendCancellableCoroutine { cont ->
-            val engine = TextToSpeech(context) { status ->
-                if (status == TextToSpeech.SUCCESS) {
-                    cont.resume(engine = tts!!)
-                }
-            }.also { tts = it }
+        return withTimeout(5000L) {
+            suspendCancellableCoroutine { cont ->
+                val engine = TextToSpeech(context) { status ->
+                    if (status == TextToSpeech.SUCCESS) {
+                        cont.resume(tts!!)
+                    } else {
+                        cont.resumeWithException(
+                            IllegalStateException("TTS başlatılamadı, hata kodu: $status")
+                        )
+                    }
+                }.also { tts = it }
 
-            engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                override fun onStart(utteranceId: String?) {
-                    _events.trySend(TtsEvent.Started)
-                }
+                engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) {
+                        _events.trySend(TtsEvent.Started)
+                    }
 
-                override fun onDone(utteranceId: String?) {
-                    _events.trySend(TtsEvent.UtteranceDone(utteranceId ?: ""))
-                }
+                    override fun onDone(utteranceId: String?) {
+                        _events.trySend(TtsEvent.UtteranceDone(utteranceId ?: ""))
+                    }
 
-                @Deprecated("Deprecated in Java")
-                override fun onError(utteranceId: String?) {
-                    _events.trySend(TtsEvent.Error("TTS hatası"))
-                }
+                    @Deprecated("Deprecated in Java")
+                    override fun onError(utteranceId: String?) {
+                        _events.trySend(TtsEvent.Error("TTS hatası"))
+                    }
 
-                override fun onRangeStart(utteranceId: String?, start: Int, end: Int, frame: Int) {
-                    currentWordStart = start
-                    _events.trySend(TtsEvent.WordStarted(start, end))
+                    override fun onRangeStart(utteranceId: String?, start: Int, end: Int, frame: Int) {
+                        currentWordStart = start
+                        _events.trySend(TtsEvent.WordStarted(start, end))
+                    }
+                })
+
+                cont.invokeOnCancellation {
+                    tts?.shutdown()
+                    tts = null
                 }
-            })
+            }
         }
     }
 
