@@ -1,5 +1,6 @@
 package com.voxable.feature_auth.presentation.register
 
+import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
@@ -71,18 +73,18 @@ fun RegisterScreen(
                 is RegisterEvent.ShowError -> snackbarHostState.showSnackbar(event.message)
                 is RegisterEvent.LaunchGoogleSignIn -> {
                     scope.launch {
+                        val serverClientId = context.resolveWebClientId()
+                        if (serverClientId == null) {
+                            viewModel.onGoogleSignInError(
+                                "Google ile kayıt yapılandırması eksik. Lütfen uygulama yapılandırmasını tamamlayın."
+                            )
+                            return@launch
+                        }
+
                         try {
                             val googleIdOption = GetGoogleIdOption.Builder()
                                 .setFilterByAuthorizedAccounts(false)
-                                .setServerClientId(
-                                    context.getString(
-                                        context.resources.getIdentifier(
-                                            "default_web_client_id",
-                                            "string",
-                                            context.packageName
-                                        )
-                                    )
-                                )
+                                .setServerClientId(serverClientId)
                                 .build()
 
                             val request = GetCredentialRequest.Builder()
@@ -223,6 +225,7 @@ fun RegisterScreen(
                     onValueChange = viewModel::onPasswordChange,
                     label = "Şifre",
                     errorMessage = state.passwordError,
+                    visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Next
@@ -237,6 +240,7 @@ fun RegisterScreen(
                     onValueChange = viewModel::onConfirmPasswordChange,
                     label = "Şifre Tekrar",
                     errorMessage = state.confirmPasswordError,
+                    visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
@@ -269,4 +273,16 @@ fun RegisterScreen(
             }
         }
     }
+}
+
+private fun Context.resolveWebClientId(): String? {
+    val resourceId = resources.getIdentifier(
+        "default_web_client_id",
+        "string",
+        packageName
+    )
+
+    if (resourceId == 0) return null
+
+    return getString(resourceId).takeIf { it.isNotBlank() }
 }

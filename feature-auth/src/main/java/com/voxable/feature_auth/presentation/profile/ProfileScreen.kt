@@ -249,6 +249,7 @@ fun ProfileScreen(
                     onValueChange = viewModel::onDisplayNameChange,
                     label = "Ad Soyad",
                     errorMessage = state.nameError,
+                    readOnly = !state.isEditing,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     accessibilityLabel = "Ad Soyad giriş alanı",
                     modifier = Modifier.fillMaxWidth()
@@ -260,6 +261,7 @@ fun ProfileScreen(
                     value = state.phoneNumber,
                     onValueChange = viewModel::onPhoneNumberChange,
                     label = "Telefon Numarası",
+                    readOnly = !state.isEditing,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Phone,
                         imeAction = ImeAction.Done

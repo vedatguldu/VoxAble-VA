@@ -31,6 +31,7 @@ import com.voxable.feature_settings.domain.model.TouchTargetSize
 fun SettingsScreen(
     onBack: () -> Unit,
     onSignOut: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -111,7 +112,10 @@ fun SettingsScreen(
             )
 
             // ─── Hesap ────────────────────────────────────
-            AccountSection(onSignOut = viewModel::onSignOut)
+            AccountSection(
+                onNavigateToProfile = onNavigateToProfile,
+                onSignOut = viewModel::onSignOut
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -453,11 +457,33 @@ private fun AccessibilitySection(
 // ════════════════════════════════════════════════════════════
 
 @Composable
-private fun AccountSection(onSignOut: () -> Unit) {
+private fun AccountSection(
+    onNavigateToProfile: () -> Unit,
+    onSignOut: () -> Unit
+) {
     SettingsSectionHeader(
         title = "Hesap",
         icon = Icons.Default.Person
     )
+
+    OutlinedButton(
+        onClick = onNavigateToProfile,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .heightIn(min = 56.dp)
+            .semantics { contentDescription = "Profil ayarlarını aç" }
+    ) {
+        Icon(
+            imageVector = Icons.Default.Edit,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("Profili Yönet")
+    }
+
+    Spacer(modifier = Modifier.height(12.dp))
 
     OutlinedButton(
         onClick = onSignOut,

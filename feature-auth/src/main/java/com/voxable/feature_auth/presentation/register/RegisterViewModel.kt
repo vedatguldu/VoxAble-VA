@@ -2,6 +2,7 @@ package com.voxable.feature_auth.presentation.register
 
 import com.voxable.core.base.BaseViewModel
 import com.voxable.core.util.Resource
+import com.voxable.feature_auth.domain.repository.AuthRepository
 import com.voxable.feature_auth.domain.usecase.GoogleSignInUseCase
 import com.voxable.feature_auth.domain.usecase.RegisterUseCase
 import com.voxable.feature_auth.domain.usecase.RestoreUserDataUseCase
@@ -12,7 +13,8 @@ import javax.inject.Inject
 class RegisterViewModel @Inject constructor(
     private val registerUseCase: RegisterUseCase,
     private val googleSignInUseCase: GoogleSignInUseCase,
-    private val restoreUserDataUseCase: RestoreUserDataUseCase
+    private val restoreUserDataUseCase: RestoreUserDataUseCase,
+    private val authRepository: AuthRepository
 ) : BaseViewModel<RegisterState, RegisterEvent>(RegisterState()) {
 
     fun onNameChange(name: String) {
@@ -68,9 +70,7 @@ class RegisterViewModel @Inject constructor(
 
             when (val result = googleSignInUseCase(idToken)) {
                 is Resource.Success -> {
-                    restoreUserDataUseCase(result.data)
-                    updateState { copy(isGoogleLoading = false) }
-                    sendEvent(RegisterEvent.RegisterSuccess)
+                    handlePostAuthentication(result.data)
                 }
                 is Resource.Error -> {
                     updateState { copy(isGoogleLoading = false) }
@@ -78,6 +78,21 @@ class RegisterViewModel @Inject constructor(
                 }
                 is Resource.Loading -> Unit
             }
+        }
+    }
+
+    private suspend fun handlePostAuthentication(uid: String) {
+        when (val restoreResult = restoreUserDataUseCase(uid)) {
+            is Resource.Success -> {
+                updateState { copy(isGoogleLoading = false) }
+                sendEvent(RegisterEvent.RegisterSuccess)
+            }
+            is Resource.Error -> {
+                authRepository.signOut()
+                updateState { copy(isGoogleLoading = false) }
+                sendEvent(RegisterEvent.ShowError(restoreResult.message))
+            }
+            is Resource.Loading -> Unit
         }
     }
 

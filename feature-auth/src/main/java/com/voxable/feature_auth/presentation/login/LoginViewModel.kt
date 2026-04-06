@@ -2,6 +2,7 @@ package com.voxable.feature_auth.presentation.login
 
 import com.voxable.core.base.BaseViewModel
 import com.voxable.core.util.Resource
+import com.voxable.feature_auth.domain.repository.AuthRepository
 import com.voxable.feature_auth.domain.usecase.GoogleSignInUseCase
 import com.voxable.feature_auth.domain.usecase.LoginUseCase
 import com.voxable.feature_auth.domain.usecase.ResetPasswordUseCase
@@ -14,7 +15,8 @@ class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     private val googleSignInUseCase: GoogleSignInUseCase,
     private val resetPasswordUseCase: ResetPasswordUseCase,
-    private val restoreUserDataUseCase: RestoreUserDataUseCase
+    private val restoreUserDataUseCase: RestoreUserDataUseCase,
+    private val authRepository: AuthRepository
 ) : BaseViewModel<LoginState, LoginEvent>(LoginState()) {
 
     fun onEmailChange(email: String) {
@@ -31,10 +33,11 @@ class LoginViewModel @Inject constructor(
 
             when (val result = loginUseCase(currentState.email, currentState.password)) {
                 is Resource.Success -> {
-                    // Giriş sonrası kullanıcı verisini geri yükle
-                    restoreUserDataUseCase(result.data)
-                    updateState { copy(isLoading = false) }
-                    sendEvent(LoginEvent.LoginSuccess)
+                    handlePostAuthentication(
+                        uid = result.data,
+                        loadingReducer = { copy(isLoading = false) },
+                        onSuccess = { sendEvent(LoginEvent.LoginSuccess) }
+                    )
                 }
                 is Resource.Error -> {
                     updateState { copy(isLoading = false) }
@@ -57,9 +60,11 @@ class LoginViewModel @Inject constructor(
 
             when (val result = googleSignInUseCase(idToken)) {
                 is Resource.Success -> {
-                    restoreUserDataUseCase(result.data)
-                    updateState { copy(isGoogleLoading = false) }
-                    sendEvent(LoginEvent.LoginSuccess)
+                    handlePostAuthentication(
+                        uid = result.data,
+                        loadingReducer = { copy(isGoogleLoading = false) },
+                        onSuccess = { sendEvent(LoginEvent.LoginSuccess) }
+                    )
                 }
                 is Resource.Error -> {
                     updateState { copy(isGoogleLoading = false) }
@@ -67,6 +72,25 @@ class LoginViewModel @Inject constructor(
                 }
                 is Resource.Loading -> Unit
             }
+        }
+    }
+
+    private suspend fun handlePostAuthentication(
+        uid: String,
+        loadingReducer: LoginState.() -> LoginState,
+        onSuccess: suspend () -> Unit
+    ) {
+        when (val restoreResult = restoreUserDataUseCase(uid)) {
+            is Resource.Success -> {
+                updateState(loadingReducer)
+                onSuccess()
+            }
+            is Resource.Error -> {
+                authRepository.signOut()
+                updateState(loadingReducer)
+                sendEvent(LoginEvent.ShowError(restoreResult.message))
+            }
+            is Resource.Loading -> Unit
         }
     }
 

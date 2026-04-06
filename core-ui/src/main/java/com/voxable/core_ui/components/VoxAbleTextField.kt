@@ -21,6 +21,7 @@ fun VoxAbleTextField(
     modifier: Modifier = Modifier,
     placeholder: String = "",
     errorMessage: String? = null,
+    readOnly: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = true,
@@ -52,6 +53,7 @@ fun VoxAbleTextField(
                 )
             }
         } else null,
+        readOnly = readOnly,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         singleLine = singleLine,

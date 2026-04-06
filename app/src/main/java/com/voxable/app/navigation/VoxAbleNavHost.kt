@@ -5,7 +5,9 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.voxable.feature_auth.navigation.PROFILE_ROUTE
 import com.voxable.feature_auth.navigation.authNavGraph
+import com.voxable.feature_auth.navigation.profileScreen
 import com.voxable.feature_auth.navigation.AUTH_GRAPH_ROUTE
 import com.voxable.feature_converter.navigation.converterScreen
 import com.voxable.feature_converter.navigation.fileConverterScreen
@@ -90,6 +92,16 @@ fun VoxAbleNavHost(
         settingsScreen(
             onBack = { navController.popBackStack() },
             onSignOut = {
+                navController.navigate(AUTH_GRAPH_ROUTE) {
+                    popUpTo(0) { inclusive = true }
+                }
+            },
+            onNavigateToProfile = { navController.navigate(PROFILE_ROUTE) }
+        )
+
+        profileScreen(
+            navController = navController,
+            onSignedOut = {
                 navController.navigate(AUTH_GRAPH_ROUTE) {
                     popUpTo(0) { inclusive = true }
                 }

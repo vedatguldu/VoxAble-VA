@@ -1,6 +1,7 @@
 package com.voxable.feature_auth.presentation.login
 
 import android.app.Activity
+import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -82,18 +83,18 @@ fun LoginScreen(
                 is LoginEvent.ShowSuccess -> snackbarHostState.showSnackbar(event.message)
                 is LoginEvent.LaunchGoogleSignIn -> {
                     scope.launch {
+                        val serverClientId = context.resolveWebClientId()
+                        if (serverClientId == null) {
+                            viewModel.onGoogleSignInError(
+                                "Google ile giriş yapılandırması eksik. Lütfen uygulama yapılandırmasını tamamlayın."
+                            )
+                            return@launch
+                        }
+
                         try {
                             val googleIdOption = GetGoogleIdOption.Builder()
                                 .setFilterByAuthorizedAccounts(false)
-                                .setServerClientId(
-                                    context.getString(
-                                        context.resources.getIdentifier(
-                                            "default_web_client_id",
-                                            "string",
-                                            context.packageName
-                                        )
-                                    )
-                                )
+                                .setServerClientId(serverClientId)
                                 .build()
 
                             val request = GetCredentialRequest.Builder()
@@ -225,6 +226,7 @@ fun LoginScreen(
                     onValueChange = viewModel::onPasswordChange,
                     label = "Şifre",
                     errorMessage = state.passwordError,
+                    visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
@@ -326,4 +328,16 @@ fun LoginScreen(
             }
         }
     }
+}
+
+private fun Context.resolveWebClientId(): String? {
+    val resourceId = resources.getIdentifier(
+        "default_web_client_id",
+        "string",
+        packageName
+    )
+
+    if (resourceId == 0) return null
+
+    return getString(resourceId).takeIf { it.isNotBlank() }
 }
